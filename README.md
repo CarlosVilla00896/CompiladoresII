@@ -11,6 +11,6 @@ Proyecto de la clase de Compiladores II, en el que realizo un pequeño compilado
 ## 2. Ejecutar el compilador
 
 ```
-Make
+make
 ./tinyGo test.txt
 ```
