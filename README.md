@@ -1,6 +1,6 @@
 # Tiny Go
 
-Proyecto de la clase de Compiladores II, en el que realizo un pequeño compilador para el lenguaje **Go**.
+Proyecto de la clase de Compiladores II, en el que realizo un pequeño compilador para una versión reducida del lenguaje **Go**.
 
 ## 1. Tecnologías y herramientas usadas
 
