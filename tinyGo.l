@@ -36,6 +36,7 @@ DIGIT [0-9]
 "int" { return INT_TYPE; }
 "float32" { return FLOAT32_TYPE; }
 "bool" { return BOOL_TYPE; }
+"string" { return STRING_TYPE; }
 
 
 \".*\" { yylval.string_t = yytext; return STRING_LITERAL; }
@@ -61,7 +62,7 @@ DIGIT [0-9]
 ">=" { return GREATER_OR_EQUAL; }
 "<=" { return LESS_OR_EQUAL; }
 
-"!" {return '!'; }
+"!" {return NOT; }
 ";" {return ';'; }
 "," {return ','; }
 ":" {return ':'; }
@@ -81,6 +82,8 @@ DIGIT [0-9]
 "(" { return '('; }
 ")" { return ')'; }
 "." { return '.'; }
+
+[\n] { return EOL; }
 
 . {printf("caracter '%c' invalido en la linea %d\n", yytext[0], yylineno);}
 
