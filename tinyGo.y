@@ -84,7 +84,16 @@ parameter_declaration: ID type
     | ID '[' ']' type 
     ;
 
-var_declaration:
+var_declaration: KW_VAR id_list type 
+    | KW_VAR id_list type '=' initializer
     ;
 
+id_list: id_list ',' id_declarator
+    | id_declarator
+    ;
+
+id_declarator: ID
+    | ID '[' ']'
+    | ID '[' expression ']'
+    ;
 %%
