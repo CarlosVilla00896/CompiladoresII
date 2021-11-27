@@ -93,7 +93,63 @@ id_list: id_list ',' id_declarator
     ;
 
 id_declarator: ID
-    | ID '[' ']'
     | ID '[' expression ']'
+    ;
+
+initializer: initializer ',' expression
+    | expression
+    ;
+
+block_statement: '{' statement_list '}'
+    | '{' external_declarations statement_list '}'
+    | '{' '}'
+    ;
+
+statement_list: statement_list statement
+    | statement
+    ;
+
+statement: if_statement
+    | for_statement
+    | expression_statement
+    | return_statement
+    | jump_statement    
+    ;
+
+if_statement:
+    ;
+
+for_statement:
+    ;
+
+expression_statement: expression
+    ;
+
+return_statement:
+    ;
+
+jump_statement:
+    ;
+
+expression: assignment_expression
+    ;
+
+assignment_expression: id_list assignment_operator initializer
+    | logical_or_expression
+    ;
+
+assignment_operator: '='
+    | PLUS_EQUAL
+    | MINUS_EQUAL
+    | AND_EQUAL
+    | OR_EQUAL
+    | MULT_EQUAL
+    | POW_EQUAL
+    | DIV_EQUAL
+    | COLON_EQUAL
+    | MOD_EQUAL
+    ;
+
+logical_or_expression:
     ;
 %%

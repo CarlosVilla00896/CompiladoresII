@@ -93,15 +93,20 @@ initializer_list: initializer_list ',' logical_or_expression
                 | logical_or_expression 
                 ;
 
+block_statement: '{' statement_list '}' 
+               | '{' declaration_list  statement_list'}'
+               | '{' '}' 
+               ;
+
+statement_list: statement_list statement 
+              | statement 
+              ;
+              
 statement: for_statement
         | expression_statement
         | if_statement 
         | jump_statement 
         ;
-
-statement_list: statement_list statement 
-              | statement 
-              ;
 
 if_statement: KW_IF '(' expression ')' statement 
             | KW_IF '(' expression ')' statement KW_ELSE statement 
@@ -116,10 +121,6 @@ for_statement: KW_FOR '(' expression ')' statement
 jump_statement: KW_RETURN expression ';' 
               ;
 
-block_statement: '{' statement_list '}' 
-               | '{' declaration_list  statement_list'}'
-               | '{' '}' 
-               ;
 
 type: INT_TYPE 
     | FLOAT32_TYPE
@@ -127,56 +128,22 @@ type: INT_TYPE
     | STRING_TYPE
     ;
 
-primary_expression: '(' expression ')' 
-    | ID 
-    | constant
-    | STRING_LITERAL 
-    ;
+argument_expression_list: argument_expression_list ',' assignment_expression 
+                        | assignment_expression 
+                        ;
+
+expression: assignment_expression 
+          ;
 
 assignment_expression: unary_expression assignment_operator assignment_expression
                      | logical_or_expression
                      ;
 
-postfix_expression: primary_expression 
-                    | postfix_expression '[' expression ']' 
-                    | postfix_expression '(' ')' 
-                    | postfix_expression '(' argument_expression_list ')' 
-                    | postfix_expression INCREASE 
-                    | postfix_expression DECREASE 
-                    ;
-
-
-argument_expression_list: argument_expression_list ',' assignment_expression 
-                        | assignment_expression 
-                        ;
-
-unary_expression: INCREASE unary_expression 
-                | DECREASE unary_expression 
-                | NOT unary_expression  
-                | postfix_expression 
-                ;
-
-multiplicative_expression: multiplicative_expression '*' unary_expression 
-      | multiplicative_expression '/' unary_expression 
-      | unary_expression 
-      ;
-
-additive_expression:  additive_expression '+' multiplicative_expression
-                    | additive_expression '-' multiplicative_expression 
-                    | multiplicative_expression 
-                    ;
-
-relational_expression: relational_expression '>' additive_expression 
-                     | relational_expression '<' additive_expression 
-                     | relational_expression GREATER_OR_EQUAL additive_expression 
-                     | relational_expression LESS_OR_EQUAL additive_expression 
-                     | additive_expression 
-                     ;
-
-equality_expression:  equality_expression EQUAL relational_expression 
-                   | equality_expression NOT_EQUAL relational_expression
-                   | relational_expression
+assignment_operator: '=' 
+                   | PLUS_EQUAL 
+                   | MINUS_EQUAL 
                    ;
+
 
 logical_or_expression: logical_or_expression OR logical_and_expression
                     | logical_and_expression 
@@ -186,13 +153,47 @@ logical_and_expression: logical_and_expression AND equality_expression
                       | equality_expression 
                       ;
 
-assignment_operator: '=' 
-                   | PLUS_EQUAL 
-                   | MINUS_EQUAL 
+equality_expression:  equality_expression EQUAL relational_expression 
+                   | equality_expression NOT_EQUAL relational_expression
+                   | relational_expression
                    ;
 
-expression: assignment_expression 
-          ;
+relational_expression: relational_expression '>' additive_expression 
+                     | relational_expression '<' additive_expression 
+                     | relational_expression GREATER_OR_EQUAL additive_expression 
+                     | relational_expression LESS_OR_EQUAL additive_expression 
+                     | additive_expression 
+                     ;
+
+additive_expression:  additive_expression '+' multiplicative_expression
+                    | additive_expression '-' multiplicative_expression 
+                    | multiplicative_expression 
+                    ;
+
+multiplicative_expression: multiplicative_expression '*' unary_expression 
+      | multiplicative_expression '/' unary_expression 
+      | unary_expression 
+      ;
+
+unary_expression: INCREASE unary_expression 
+                | DECREASE unary_expression 
+                | NOT unary_expression  
+                | postfix_expression 
+                ;
+
+postfix_expression: primary_expression 
+                    | postfix_expression '[' expression ']' 
+                    | postfix_expression '(' ')' 
+                    | postfix_expression '(' argument_expression_list ')' 
+                    | postfix_expression INCREASE 
+                    | postfix_expression DECREASE 
+                    ;
+
+primary_expression: '(' expression ')' 
+    | ID 
+    | constant
+    | STRING_LITERAL 
+    ;
 
 constant: INT_CONSTANT 
         | FLOAT_CONSTANT
