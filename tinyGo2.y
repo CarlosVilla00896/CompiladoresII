@@ -40,19 +40,19 @@
 
 %%
 
+
 start: package_declaration
     ;
 
-package_declaration: KW_PACKAGE ID import_declaration
+package_declaration : KW_PACKAGE ID import_declaration
     ;
 
-import_declaration : import_declaration KW_IMPORT STRING_LITERAL
-    | KW_IMPORT STRING_LITERAL program 
+import_declaration : import_declaration KW_IMPORT '"' ID '"' EOL
+    | KW_IMPORT '"' ID '"' EOL program
     ;
 
 program: program external_declarations
     | external_declarations
-    ;
 
 external_declarations: function_definition
     | var_declaration
@@ -63,14 +63,6 @@ function_definition: KW_FUNC ID '(' parameters_list ')' '(' return_type_list ')'
     | KW_FUNC ID '(' parameters_list ')' type block_statement
     | KW_FUNC ID '(' parameters_list ')'  block_statement
     | KW_FUNC ID '(' ')'  block_statement
-    ;
-
-parameters_list: parameters_list ',' parameter_declaration
-    | parameter_declaration
-    ;
-
-parameter_declaration: ID type
-    | ID '[' ']' type 
     ;
 
 type: INT_TYPE
@@ -84,9 +76,16 @@ return_type_list: return_type_list ',' type
     | '[' ']' type
     ;
 
+parameters_list: parameters_list ',' parameter_declaration
+    | parameter_declaration
+    ;
+
+parameter_declaration: ID type
+    | ID '[' ']' type 
+    ;
+
 var_declaration: KW_VAR id_list type 
     | KW_VAR id_list type '=' initializer
-    | KW_VAR id_list '=' initializer
     ;
 
 id_list: id_list ',' id_declarator
@@ -94,20 +93,15 @@ id_list: id_list ',' id_declarator
     ;
 
 id_declarator: ID
-    | ID '[' logical_or_expression ']'
+    | ID '[' expression ']'
     ;
 
-initializer: initializer ',' logical_or_expression
-    |'[' logical_or_expression ']' type '{' array_values '}'
-    | logical_or_expression
-    ;
-
-array_values: array_values ',' logical_or_expression
-    | logical_or_expression
+initializer: initializer ',' expression
+    | expression
     ;
 
 block_statement: '{' statement_list '}'
-    | '{' statement_list  external_declarations '}'
+    | '{' external_declarations statement_list '}'
     | '{' '}'
     ;
 
@@ -115,32 +109,32 @@ statement_list: statement_list statement
     | statement
     ;
 
-statement: if_statement 
+statement: if_statement
     | for_statement
-    | return_statement
-    | jump_statement
     | expression_statement
+    | return_statement
+    | jump_statement    
     ;
 
-if_statement: KW_IF
+if_statement:
     ;
 
-for_statement: KW_FOR
-    ;
-
-return_statement: KW_RETURN
-    ;
-
-jump_statement: KW_CONTINUE
+for_statement:
     ;
 
 expression_statement: expression
     ;
 
+return_statement:
+    ;
+
+jump_statement:
+    ;
+
 expression: assignment_expression
     ;
 
-assignment_expression: id_list  assignment_operator initializer
+assignment_expression: id_list assignment_operator initializer
     | logical_or_expression
     ;
 
@@ -156,14 +150,23 @@ assignment_operator: '='
     | MOD_EQUAL
     ;
 
-logical_or_expression: FLOAT_CONSTANT
-    | ID
-    | '(' expression ')'
-    | ID '.'logical_or_expression
-    | INT_CONSTANT
-    | KW_TRUE
-    | KW_FALSE
-    | STRING_LITERAL
+logical_or_expression:
     ;
 
+
+assignment_expression: id_list assignment_operator assignment_initializer_list
+    | logical_or_expression
+    ;
+
+assignment_initializer_list: assignment_initializer_list ',' assignment_initializer
+    | assignment_initializer
+    ;
+
+assignment_initializer: '[' logical_or_expression ']' type '{' array_list '}'
+    | assignment_expression
+    ;
+    
+array_list: array_list ',' logical_or_expression
+    | logical_or_expression
+    ;
 %%

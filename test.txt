@@ -1,29 +1,17 @@
 package main
+import "fmt"
 
-import (
-    "fmt"
-    "math/rand"
-)
+var a, b, c bool
+var intArray [5]int
+var i, j int = 1, 2
+var c, python, java = true, false, "no!"
+
 
 func main() {
-
-    /*
-	Operadores básicos
-    */
-    a:= rand.Float32() * 100
-    b:= rand.Float32() * 100
-
-    fmt.Println("a = ", a)
-    fmt.Println("b = ", b)
-    fmt.Println("a+b = ", a+b)
-    fmt.Println("a-b = ", a-b)
-    fmt.Println("a*b = ", a*b)	
-    fmt.Println("a/b = ", a/b)
-    //fmt.Println("a%b = ", a%b)
-    fmt.Println("a>b = ", a>b)
-    fmt.Println("a<b = ", a<b)
-    fmt.Println("a>=b = ", a>=b)
-    fmt.Println("a<=b = ", a<=b)
-    fmt.Println("true&&true = ", true && false)
-
+	k := 3
+	c, python, java := true, false, "no!"
+    theArray[0] = "India"
+    x := [5]int{10, 20, 30, 40, 50}
+	fmt.Println(i)
+    var strArray [5]string
 }
