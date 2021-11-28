@@ -107,7 +107,6 @@ array_values: array_values ',' logical_or_expression
     ;
 
 block_statement: '{' statement_list '}'
-    | '{' statement_list  external_declarations '}'
     | '{' '}'
     ;
 
@@ -120,6 +119,7 @@ statement: if_statement
     | return_statement
     | jump_statement
     | expression_statement
+    | external_declarations
     ;
 
 if_statement: KW_IF
@@ -140,7 +140,7 @@ expression_statement: expression
 expression: assignment_expression
     ;
 
-assignment_expression: id_list  assignment_operator initializer
+assignment_expression: id_list assignment_operator initializer
     | logical_or_expression
     ;
 
@@ -156,10 +156,43 @@ assignment_operator: '='
     | MOD_EQUAL
     ;
 
-logical_or_expression: FLOAT_CONSTANT
+
+logical_or_expression: logical_or_expression OR logical_and_expression
+    | logical_and_expression
+    ;
+
+logical_and_expression: logical_and_expression AND equality_expression
+    | equality_expression
+    ;
+
+equality_expression: equality_expression EQUAL relational_expression
+    | equality_expression  NOT_EQUAL relational_expression
+    | relational_expression
+    ;
+    
+relational_expression: relational_expression '>' term_expression 
+    | relational_expression '<' term_expression 
+    | relational_expression GREATER_OR_EQUAL term_expression 
+    | relational_expression LESS_OR_EQUAL term_expression 
+    | term_expression
+    ;
+
+term_expression: term_expression '+' factor_expression
+    | term_expression '-' factor_expression
+    | factor_expression
+    ;
+
+factor_expression: factor_expression '*' primary_expression
+    | factor_expression '/' primary_expression
+    | primary_expression
+    ;
+
+/* faltan mas operaciones antes de pasar a las unary o postfix, como la % y la ^ */
+
+primary_expression: FLOAT_CONSTANT
     | ID
     | '(' expression ')'
-    | ID '.'logical_or_expression
+    | ID '.'primary_expression
     | INT_CONSTANT
     | KW_TRUE
     | KW_FALSE

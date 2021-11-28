@@ -150,23 +150,14 @@ assignment_operator: '='
     | MOD_EQUAL
     ;
 
-logical_or_expression:
-    ;
 
-
-assignment_expression: id_list assignment_operator assignment_initializer_list
-    | logical_or_expression
-    ;
-
-assignment_initializer_list: assignment_initializer_list ',' assignment_initializer
-    | assignment_initializer
-    ;
-
-assignment_initializer: '[' logical_or_expression ']' type '{' array_list '}'
-    | assignment_expression
-    ;
-    
-array_list: array_list ',' logical_or_expression
-    | logical_or_expression
+logical_or_expression: FLOAT_CONSTANT
+    | ID
+    | '(' expression ')'
+    | ID '.'logical_or_expression
+    | INT_CONSTANT
+    | KW_TRUE
+    | KW_FALSE
+    | STRING_LITERAL
     ;
 %%

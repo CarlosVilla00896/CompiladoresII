@@ -7,11 +7,24 @@ var i, j int = 1, 2
 var c, python, java = true, false, "no!"
 
 
-func main() {
+func swap(x int, y string) (string, string) {
 	k := 3
 	c, python, java := true, false, "no!"
     theArray[0] = "India"
-    x := [5]int{10, 20, 30, 40, 50}
+    var i, j int = 1, 2
 	fmt.Println(i)
     var strArray [5]string
+    x := [5]int{10, 20, 30, 40, 50}
 }
+
+func swap(x bool, y string) (string, string) {
+	return
+}
+
+func main() {
+	a, b := swap("hello")
+	fmt.Println(a)
+}
+
+var i, j int = 1, 2
+var c, python, java = true, false, "no!"
