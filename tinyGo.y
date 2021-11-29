@@ -95,6 +95,7 @@ id_list: id_list ',' logical_or_expression
 
 initializer: initializer ',' logical_or_expression
     |'[' logical_or_expression ']' type '{' array_values '}'
+    |'[' ']' type '{' array_values '}'
     | logical_or_expression
     ;
 
@@ -135,10 +136,15 @@ for_clause: expression ';' expression ';' expression
     |
     ;
 
-return_statement: KW_RETURN
+return_statement: KW_RETURN return_expression_list
     ;
 
-jump_statement: KW_CONTINUE
+return_expression_list: return_expression_list ',' logical_or_expression
+    | logical_or_expression
+    ;
+
+jump_statement: KW_CONTINUE 
+    | KW_BREAK
     ;
 
 expression_statement: expression

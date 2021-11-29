@@ -1,0 +1,26 @@
+package main
+ 
+import "fmt"
+ 
+func main() {
+ 
+    /*
+    Operadores básicos
+    */
+    a:= rand.sloat32() * 100
+    b:= rand.sloat32() * 100
+ 
+    fmt.Println("a = ", a)
+    fmt.Println("b = ", b)
+    fmt.Println("a+b = ", a+b)
+    fmt.Println("a-b = ", a-b)
+    fmt.Println("a*b = ", a*b)  
+    fmt.Println("a/b = ", a/b)
+    //fmt.Println("a%b = ", a%b)
+    fmt.Println("a>b = ", a>b)
+    fmt.Println("a<b = ", a<b)
+    fmt.Println("a>=b = ", a>=b)
+    fmt.Println("a<=b = ", a<=b)
+    fmt.Println("true&&true = ", true && false)
+ 
+}
