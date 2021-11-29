@@ -89,12 +89,8 @@ var_declaration: KW_VAR id_list type
     | KW_VAR id_list '=' initializer
     ;
 
-id_list: id_list ',' id_declarator
-    | id_declarator
-    ;
-
-id_declarator: ID
-    | ID '[' logical_or_expression ']'
+id_list: id_list ',' logical_or_expression
+    | logical_or_expression
     ;
 
 initializer: initializer ',' logical_or_expression
@@ -122,10 +118,21 @@ statement: if_statement
     | external_declarations
     ;
 
-if_statement: KW_IF
+if_statement: KW_IF expression_list block_statement 
+    | KW_IF expression_list block_statement KW_ELSE block_statement
+    | KW_IF expression_list block_statement KW_ELSE if_statement
     ;
 
-for_statement: KW_FOR
+expression_list: expression_list ';' expression
+    | expression
+    ;
+
+for_statement: KW_FOR for_clause block_statement
+    ;
+
+for_clause: expression ';' expression ';' expression
+    | expression
+    |
     ;
 
 return_statement: KW_RETURN
@@ -156,7 +163,6 @@ assignment_operator: '='
     | MOD_EQUAL
     ;
 
-
 logical_or_expression: logical_or_expression OR logical_and_expression
     | logical_and_expression
     ;
@@ -182,12 +188,33 @@ term_expression: term_expression '+' factor_expression
     | factor_expression
     ;
 
-factor_expression: factor_expression '*' primary_expression
-    | factor_expression '/' primary_expression
+factor_expression: factor_expression '*' pow_expression
+    | factor_expression '/' pow_expression
+    | factor_expression '%' pow_expression
+    | pow_expression
+    ;
+
+pow_expression: pow_expression '^' unary_expression
+    | unary_expression
+    ;
+
+unary_expression: INCREASE unary_expression 
+    | DECREASE unary_expression 
+    | NOT unary_expression  
+    | postfix_expression 
+    ;
+
+postfix_expression: postfix_expression INCREASE 
+    | postfix_expression DECREASE 
+    | postfix_expression '(' argument_expression_list ')'
+    | postfix_expression '(' ')' 
+    | postfix_expression '[' expression ']'
     | primary_expression
     ;
 
-/* faltan mas operaciones antes de pasar a las unary o postfix, como la % y la ^ */
+argument_expression_list: logical_or_expression ',' logical_or_expression 
+    | logical_or_expression
+    ; 
 
 primary_expression: FLOAT_CONSTANT
     | ID

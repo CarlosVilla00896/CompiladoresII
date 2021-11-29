@@ -22,8 +22,68 @@ func swap(x bool, y string) (string, string) {
 }
 
 func main() {
-	a, b := swap("hello")
-	fmt.Println(a)
+	 /*
+    Operadores básicos
+    */
+    a:= rand.Sloat32() * 100
+    b:= rand.Sloat32() * 100
+	
+	if 7%2 == 0 {
+        fmt.Println("7 is even")
+    } else {
+        fmt.Println("7 is odd")
+    }
+
+	if (array[j] > array[j+1]) {
+		array[j], array[j+1] = array[j+1], array[j]
+	}
+
+	if num := 9; num < 0 {
+        fmt.Println(num, "is negative")
+    } else if num < 10 {
+        fmt.Println(num, "has 1 digit")
+    } else {
+        fmt.Println(num, "has multiple digits")
+    }
+
+    fmt.Println("a = ", a)
+    fmt.Println("b = ", b)
+    fmt.Println("a+b = ", a+b)
+    fmt.Println("a-b = ", a-b)
+    fmt.Println("a*b = ", a*b)  
+    fmt.Println("a/b = ", a/b)
+    //fmt.Println("a%b = ", a%b)
+    fmt.Println("a>b = ", a>b)
+    fmt.Println("a<b = ", a<b)
+    fmt.Println("a>=b = ", a>=b)
+    fmt.Println("a<=b = ", a<=b)
+    fmt.Println("true&&true = ", true && false)
+}
+
+func loops() {
+ 
+    i := 1
+	
+
+    for i <= 3 {
+        fmt.Println(i)
+        i = i + 1
+    }
+ 
+    for {
+        fmt.Println("loop")
+        break
+    }
+	for j := 7; j <= 9; j++ {
+        fmt.Println(j)
+    }
+	
+    for n := 0; n <= 5; n++ {
+        if n%2 == 0 {
+            continue
+        }
+        fmt.Println(n)
+    }
 }
 
 var i, j int = 1, 2
