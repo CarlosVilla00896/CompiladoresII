@@ -46,7 +46,7 @@ start: package_declaration
 package_declaration: KW_PACKAGE ID import_declaration
     ;
 
-import_declaration : import_declaration KW_IMPORT STRING_LITERAL
+import_declaration : KW_IMPORT STRING_LITERAL import_declaration 
     | KW_IMPORT STRING_LITERAL program 
     ;
 
