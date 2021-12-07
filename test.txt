@@ -99,7 +99,7 @@ func BubbleSort(array[] int, size int)[]int {
    return array
 }
  
-func main() {
+func main2() {
  
    var size int = 7 
    array:= []int{11, 14, 3, 8, 18, 17, 43}

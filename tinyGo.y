@@ -89,10 +89,14 @@ var_declaration: KW_VAR id_list type
     | KW_VAR id_list '=' initializer
     ;
 
-id_list: id_list ',' logical_or_expression
-    | logical_or_expression
+id_list: id_list ',' declarator
+    | declarator
     ;
 
+declarator: ID
+    | ID '[' logical_or_expression ']'
+    ;
+    
 initializer: initializer ',' logical_or_expression
     |'[' logical_or_expression ']' type '{' array_values '}'
     |'[' ']' type '{' array_values '}'
@@ -124,8 +128,8 @@ if_statement: KW_IF expression_list block_statement
     | KW_IF expression_list block_statement KW_ELSE if_statement
     ;
 
-expression_list: expression_list ';' expression
-    | expression
+expression_list: expression_list ';' assignment_expression
+    | assignment_expression
     ;
 
 for_statement: KW_FOR for_clause block_statement
@@ -153,7 +157,11 @@ expression_statement: expression
 expression: assignment_expression
     ;
 
-assignment_expression: id_list assignment_operator initializer
+assignment_expression: assignment_list assignment_operator initializer
+    | logical_or_expression
+    ;
+
+assignment_list: assignment_list ',' logical_or_expression
     | logical_or_expression
     ;
 
