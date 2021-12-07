@@ -120,7 +120,8 @@ statement: if_statement
     | return_statement
     | jump_statement
     | expression_statement
-    | external_declarations
+    | function_definition
+    | var_declaration
     ;
 
 if_statement: KW_IF expression_list block_statement 
