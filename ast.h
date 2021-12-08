@@ -10,14 +10,17 @@ class InitDeclarator;
 class Declaration;
 class Parameter;
 class Statement;
+class Declarator;
 
 typedef list<Declarator *> DeclaratorList;
 typedef list<Expression *> InitializerList;
 typedef list<Parameter* > ParametersList;
-typedef list<Type> typeList;
+typedef list<Type>TypeList;
 typedef list<Statement *> StatementList;
 typedef list<Expression *> ExpressionList;
 typedef list<Expression *> ArgumentsList;
+typedef list<Expression *> ReturnExpressionList;
+typedef list<Expression *> AssignmentList;
 
 
 enum StatementKind{
@@ -31,7 +34,8 @@ enum StatementKind{
     FUNCTION_DEFINITION_STATEMENT,
     GLOBAL_DECLARATION_STATEMENT,
     ELSE_STATEMENT,
-    JUMP_STATEMENT
+    JUMP_STATEMENT,
+    VAR_DECLARATION_STATEMENT
 };
 
 enum UnaryType{
@@ -55,14 +59,16 @@ class Statement{
 
 class Initializer{
     public:
-        Initializer(InitializerList initializerList, bool isArrayInitializer, Type type, int line){
-            this->initializerList = initializerList;
+        Initializer(Expression * initializer, ExpressionList arrayValues, bool isArrayInitializer, Type type, int line){
+            this->initializer = initializer;
+            this->arrayValues = arrayValues;
             this->type = type;
             this->isArrayInitializer = isArrayInitializer;
             this->line = line;
         }
 
-        InitializerList initializerList;
+        Expression * initializer;
+        ExpressionList arrayValues;
         Type type;
         bool isArrayInitializer;
         int line;
@@ -70,20 +76,20 @@ class Initializer{
 
 class Declarator{
     public:
-        Declarator(string id, Expression * arrayDeclaration, bool isArray, int line){
+        Declarator(string id, Expression * arrayDeclarationValues, bool isArray, int line){
             this->id = id;
-            this->arrayDeclaration = arrayDeclaration;
+            this->arrayDeclarationValues = arrayDeclarationValues;
             this->isArray = isArray;
             this->line = line;
         }
 
         string id;
-        Expression * arrayDeclaration;
+        Expression * arrayDeclarationValues;
         bool isArray;
         int line;
 };
 
-//Lista de las variables de la declaracion
+//Lista de las variables de la declaracion, probablemente no necesito esto.
 class DeclarationList{
     public:
         DeclarationList(DeclaratorList declarators, int line){
@@ -95,7 +101,7 @@ class DeclarationList{
         int line;
 };
 
-class VarDeclaration{
+class VarDeclaration : public Statement{
     public:
         VarDeclaration(DeclaratorList declaratorsList, Initializer * initializer, Type type, int line ) {
             this->declaratorsList = declaratorsList;
@@ -109,16 +115,19 @@ class VarDeclaration{
         int line;
 
         int evaluateSemantic();
+        StatementKind getKind(){
+            return VAR_DECLARATION_STATEMENT;
+        }
 };
 
 
 class GlobalDeclaration : public Statement{
     public:
-        GlobalDeclaration(VarDeclaration * varDeclaration){
-            this->varDeclaration = varDeclaration;
+        GlobalDeclaration(Statement * declarationStatement){
+            this->declarationStatement = declarationStatement;
         }
 
-        VarDeclaration * varDeclaration;
+        Statement * declarationStatement;
 
         int evaluateSemantic();
         StatementKind getKind(){
@@ -159,11 +168,11 @@ class BlockStatement : public Statement {
 
 class FunctionDefinition : public Statement {
     public: 
-        FunctionDefinition( string id, ParametersList params, Type type, bool isSingleType, Statement * statement, int line){
+        FunctionDefinition( string id, ParametersList params, Type type, TypeList typeList, string functionKind, Statement * statement, int line){
             this->id = id;
             this->parametersList = parametersList;
             this->type = type;
-            this->isSingleType = isSingleType;
+            this->functionKind = functionKind;
             this->statement = statement;
             this->line = line;
         }
@@ -171,7 +180,8 @@ class FunctionDefinition : public Statement {
         string id;
         ParametersList parametersList;
         Type type;
-        bool isSingleType;
+        TypeList typeList;
+        string functionKind;
         Statement * statement;
         int line;
 
@@ -260,11 +270,31 @@ class BinaryExpression : public Expression{
         int line;
 };
 
-#define IMPLEMENT_BINARY_EXPRESSION(name)\
-class name##Expression : public BinaryExpression{\ 
-    public:\
-        name##Expression(Expression * leftExpression, Expression * rightEXpression, int line) : BinaryExpression(leftExpression, rightExpression, line){}\
-        Type getType();\
+class BinaryAssignExpression : public Expression{
+    public:
+        BinaryAssignExpression(ExpressionList leftExpressionList, ExpressionList rightExpressionList, int line){
+            this->leftExpressionList = leftExpressionList;
+            this->rightExpressionList = rightExpressionList;
+            this->line = line;
+        }
+
+        ExpressionList leftExpressionList;
+        ExpressionList rightExpressionList;
+        int line;
+};
+
+#define IMPLEMENT_BINARY_EXPRESSION(name) \
+class name##Expression : public BinaryExpression{\
+    public: \
+        name##Expression(Expression * leftExpression, Expression * rightExpression, int line) : BinaryExpression(leftExpression, rightExpression, line){}\
+        Type getType(); \
+};
+
+#define IMPLEMENT_BINARY_ASSIGN_EXPRESSION(name) \
+class name##Expression : public BinaryAssignExpression{\
+    public: \
+        name##Expression(ExpressionList leftExpressionList, ExpressionList rightExpressionList, int line) : BinaryAssignExpression(leftExpressionList, rightExpressionList, line){}\
+        Type getType(); \
 };
 
 class UnaryExpression : public Expression{
@@ -295,11 +325,11 @@ class PostIncrementExpression: public Expression{
 
 class PostDecrementExpression: public Expression{
     public:
-        PostDecrementExpression(Expression * expression, int line){
-            this->expression = expression;
+        PostDecrementExpression(IdExpression * id, int line){
+            this->id = id;
             this->line = line;
         }
-        Expression * expression;
+        IdExpression * id;
         int line;
 
         Type getType();
@@ -409,18 +439,18 @@ class ForStatement : public Statement{
 
         int evaluateSemantic();
         StatementKind getKind(){
-            FOR_STATEMENT;
+            return FOR_STATEMENT;
         }
 };
 
 class ReturnStatement : public Statement{
     public:
-        ReturnStatement( ExpressionList expressionList, int line ){
+        ReturnStatement( ReturnExpressionList expressionList, int line ){
             this->expressionList = expressionList;
             this->line = line;
         }
 
-        ExpressionList expressionList;
+        ReturnExpressionList expressionList;
         int line;
 
         int evaluateSemantic();
@@ -474,13 +504,25 @@ IMPLEMENT_BINARY_EXPRESSION(Gt);
 IMPLEMENT_BINARY_EXPRESSION(Lt);
 IMPLEMENT_BINARY_EXPRESSION(LogicalAnd);
 IMPLEMENT_BINARY_EXPRESSION(LogicalOr);
-IMPLEMENT_BINARY_EXPRESSION(Assign);
-IMPLEMENT_BINARY_EXPRESSION(PlusAssign);
-IMPLEMENT_BINARY_EXPRESSION(MinusAssign);
-IMPLEMENT_BINARY_EXPRESSION(MultAssign);
-IMPLEMENT_BINARY_EXPRESSION(PowAssign);
-IMPLEMENT_BINARY_EXPRESSION(ModAssign);
-IMPLEMENT_BINARY_EXPRESSION(DivAssign);
-IMPLEMENT_BINARY_EXPRESSION(AndAssign);
-IMPLEMENT_BINARY_EXPRESSION(OrAssign);
-IMPLEMENT_BINARY_EXPRESSION(ColonAssign);
+
+// IMPLEMENT_BINARY_EXPRESSION(Assign);
+// IMPLEMENT_BINARY_EXPRESSION(PlusAssign);
+// IMPLEMENT_BINARY_EXPRESSION(MinusAssign);
+// IMPLEMENT_BINARY_EXPRESSION(MultAssign);
+// IMPLEMENT_BINARY_EXPRESSION(DivAssign);
+// IMPLEMENT_BINARY_EXPRESSION(ModAssign);
+// IMPLEMENT_BINARY_EXPRESSION(PowAssign);
+// IMPLEMENT_BINARY_EXPRESSION(AndAssign);
+// IMPLEMENT_BINARY_EXPRESSION(OrAssign);
+// IMPLEMENT_BINARY_EXPRESSION(ColonAssign);
+
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(Assign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(PlusAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(MinusAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(MultAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(DivAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(ModAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(PowAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(AndAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(OrAssign);
+IMPLEMENT_BINARY_ASSIGN_EXPRESSION(ColonAssign);

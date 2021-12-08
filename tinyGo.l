@@ -46,8 +46,8 @@ DIGIT [0-9]
 
 "+=" { return PLUS_EQUAL; }
 "-=" { return MINUS_EQUAL; }
-"++" { return INCREASE; }
-"--" { return DECREASE; }
+"++" { return TK_INCREASE; }
+"--" { return TK_DECREASE; }
 "||" { return OR; }
 "&&" { return AND; }
 "&=" { return AND_EQUAL; }
@@ -57,12 +57,12 @@ DIGIT [0-9]
 "/=" { return DIV_EQUAL; }
 ":=" { return COLON_EQUAL; }
 "%=" { return MOD_EQUAL; }
-"==" { return EQUAL; }
+"==" { return TK_EQUAL; }
 "!=" { return NOT_EQUAL; }
 ">=" { return GREATER_OR_EQUAL; }
 "<=" { return LESS_OR_EQUAL; }
 
-"!" {return NOT; }
+"!" {return TK_NOT; }
 ";" {return ';'; }
 "," {return ','; }
 ":" {return ':'; }
