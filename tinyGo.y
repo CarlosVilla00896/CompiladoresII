@@ -124,21 +124,17 @@ statement: if_statement
     | var_declaration
     ;
 
-if_statement: KW_IF expression_list block_statement 
-    | KW_IF expression_list block_statement KW_ELSE block_statement
-    | KW_IF expression_list block_statement KW_ELSE if_statement
+if_statement: KW_IF expression ';' logical_or_expression block_statement 
+    | KW_IF expression block_statement
+    | KW_IF expression ';' logical_or_expression block_statement KW_ELSE block_statement 
+    | KW_IF expression block_statement KW_ELSE block_statement
+    | KW_IF expression ';' logical_or_expression block_statement KW_ELSE if_statement
+    | KW_IF expression block_statement KW_ELSE if_statement
     ;
 
-expression_list: expression_list ';' assignment_expression
-    | assignment_expression
-    ;
-
-for_statement: KW_FOR for_clause block_statement
-    ;
-
-for_clause: expression ';' expression ';' expression
-    | expression
-    |
+for_statement: KW_FOR expression ';' expression ';' expression block_statement
+    | KW_FOR expression block_statement
+    | KW_FOR block_statement
     ;
 
 return_statement: KW_RETURN return_expression_list
@@ -224,6 +220,7 @@ postfix_expression: postfix_expression INCREASE
     | postfix_expression '(' argument_expression_list ')'
     | postfix_expression '(' ')' 
     | postfix_expression '[' expression ']'
+    | postfix_expression '.'primary_expression
     | primary_expression
     ;
 
@@ -234,7 +231,6 @@ argument_expression_list: logical_or_expression ',' logical_or_expression
 primary_expression: FLOAT_CONSTANT
     | ID
     | '(' expression ')'
-    | ID '.'primary_expression
     | INT_CONSTANT
     | KW_TRUE
     | KW_FALSE
