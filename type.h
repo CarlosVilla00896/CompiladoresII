@@ -6,5 +6,6 @@ enum Type{
     VOID,
     INT_ARRAY,
     FLOAT_ARRAY,
-    BOOL
+    BOOL,
+    NULLTYPE,
 };

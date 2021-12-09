@@ -114,27 +114,27 @@ external_declarations: function_definition { $$ = $1; }
     ;
 
 function_definition: KW_FUNC ID '(' parameters_list ')' '(' return_type_list ')' block_statement { 
-        $$ = new FunctionDefinition($2, $4, NULL, $7, "lista", $9, yylineno );
+        $$ = new FunctionDefinition($2, *$4, NULLTYPE, *$7, "lista", $9, yylineno );
     }
     | KW_FUNC ID '(' parameters_list ')' '[' ']'type block_statement{
-        TypeList * typeList = new TypeList();
-        $$ = new FunctionDefinition($2, $4, (Type)$8, *typeList, "tipo", $9, yylineno);
+        TypeList * typeList = new TypeList;
+        $$ = new FunctionDefinition($2, *$4, (Type)$8, *typeList, "tipo", $9, yylineno);
         delete typeList;
     }
     | KW_FUNC ID '(' parameters_list ')' type block_statement{
-        TypeList * typeList = new TypeList();
-        $$ = new FunctioDefinition($2, $4, (Type)$6, *typeList, "tipo", $7, yylineno);
+        TypeList * typeList = new TypeList;
+        $$ = new FunctionDefinition($2, *$4, (Type)$6, *typeList, "tipo", $7, yylineno);
         delete typeList;
     }
     | KW_FUNC ID '(' parameters_list ')'  block_statement{
-        TypeList * typeList = new TypeList();
-        $$ = new FunctioDefinition($2, $4, NULL, *typeList, "nada", $6, yylineno);
+        TypeList * typeList = new TypeList;
+        $$ = new FunctionDefinition($2, *$4, NULLTYPE, *typeList, "nada", $6, yylineno);
         delete typeList;
     }
     | KW_FUNC ID '(' ')'  block_statement{
         ParametersList * pm = new ParametersList();
-        TypeList * typeList = new TypeList();
-        $$ = new FunctioDefinition($2, *pm, NULL, *typeList, "nada", $5, yylineno);
+        TypeList * typeList = new TypeList;
+        $$ = new FunctionDefinition($2, *pm, NULLTYPE, *typeList, "nada", $5, yylineno);
         delete typeList;
         delete pm;
     }
@@ -158,9 +158,12 @@ return_type_list: return_type_list ',' type { $$ = $1; $$->push_back((Type)$3); 
     | '[' ']' type { $$ = new TypeList; $$->push_back((Type)$3); }
     ;
 
-var_declaration: KW_VAR id_list type { $$ = new VarDeclaration($2, NULL, (Type)$3, yylineno ); }
-    | KW_VAR id_list type '=' initializer { $$ = new VarDeclaration($2, $5, (Type)$3, yylineno ); }
-    | KW_VAR id_list '=' initializer { $$ = new VarDeclaration($2, $4, NULL, yylineno ); }
+var_declaration: KW_VAR id_list type { 
+        InitializerList * initializerList = new InitializerList; 
+        $$ = new VarDeclaration(*$2, *initializerList, (Type)$3, yylineno ); 
+    }
+    | KW_VAR id_list type '=' initializer { $$ = new VarDeclaration(*$2, *$5, (Type)$3, yylineno ); }
+    | KW_VAR id_list '=' initializer { $$ = new VarDeclaration(*$2, *$4, NULLTYPE, yylineno ); }
     ;
 
 id_list: id_list ',' declarator { $$ = $1; $$->push_back($3); }
@@ -170,20 +173,27 @@ id_list: id_list ',' declarator { $$ = $1; $$->push_back($3); }
 declarator: ID { $$ = new Declarator($1, NULL, false, yylineno); }
     | ID '[' logical_or_expression ']' { $$ = new Declarator($1, $3, true, yylineno); }
     ;
+    /* Regresar el InitializerList a una lista de Expressions y hacer que estas expressiones de arreglos y todo vayan al postfix o algo, solo dejar logical_or */
     
-initializer: initializer ',' logical_or_expression { $$ = $1; $$->push_back($3); }
+initializer: initializer ',' logical_or_expression { 
+        $$ = $1; 
+        ExpressionList * expressionList = new ExpressionList();
+        $$->push_back(new Initializer( $3, *expressionList, false, NULLTYPE, yylineno ));
+        delete expressionList; 
+    }
     |'[' logical_or_expression ']' type '{' array_values '}' {
          $$ = new InitializerList; 
-         $$->push_back( new Intializer( $2, $6, true, (Type)$4, yylineno ) );
+         $$->push_back( new Initializer( $2, *$6, true, (Type)$4, yylineno ) );
     }
     |'[' ']' type '{' array_values '}' {
         $$ = new InitializerList; 
-        $$->push_back( new Intializer( NULL, $5, true, (Type)$3, yylineno ) );
+        $$->push_back( new Initializer( NULL, *$5, true, (Type)$3, yylineno ) );
     }
     | logical_or_expression{
         $$ = new InitializerList;
         ExpressionList * expressionList = new ExpressionList(); 
-        $$->push_back( new Intializer( $1, *expressionList, false, NULL, yylineno ) );
+        $$->push_back( new Initializer( $1, *expressionList, false, NULLTYPE, yylineno ) );
+        delete expressionList;
     }
     ;
 
@@ -191,7 +201,7 @@ array_values: array_values ',' logical_or_expression { $$ = $1; $$->push_back($3
     | logical_or_expression { $$ = new ExpressionList; $$->push_back($1); }
     ;
 
-block_statement: '{' statement_list '}' { $$ = new BlockStatement( $2, yylineno); }
+block_statement: '{' statement_list '}' { $$ = new BlockStatement( *$2, yylineno); }
     | '{' '}' { StatementList * statementList = new StatementList();  $$ = new BlockStatement(*statementList, yylineno); }
     ;
 
@@ -221,7 +231,7 @@ for_statement: KW_FOR expression ';' expression ';' expression block_statement {
     | KW_FOR block_statement { $$ = new ForStatement(NULL, NULL, NULL, $2, yylineno); }
     ;
 
-return_statement: KW_RETURN return_expression_list { $$ = ReturnStatement($2, yylineno); }
+return_statement: KW_RETURN return_expression_list { $$ = new ReturnStatement(*$2, yylineno); }
     ;
 
 return_expression_list: return_expression_list ',' logical_or_expression { $$ = $1; $$->push_back($3); }
@@ -232,7 +242,7 @@ jump_statement: KW_CONTINUE  { $$ = new JumpStatement(KWCONTINUE, yylineno); }
     | KW_BREAK { $$ = new JumpStatement(KWBREAK, yylineno); }
     ;
 
-expression_statement: expression { $$ = ExpressionStatement( $1, yylineno ); }
+expression_statement: expression { $$ = new ExpressionStatement( $1, yylineno ); }
     ;
 
 expression: assignment_expression { $$ = $1; }
@@ -241,36 +251,37 @@ expression: assignment_expression { $$ = $1; }
 assignment_expression: assignment_list assignment_operator initializer { 
         switch($2){
             case EQUAL:
-                $$ = AssignExpression($1, $3, yylineno);
+                $$ = new AssignExpression(*$1, *$3, yylineno);
                 break;
             case PLUSEQUAL:
-                $$ = PlusAssignExpression($1, $3, yylineno);
+                $$ = new PlusAssignExpression(*$1, *$3, yylineno);
                 break;
             case MINUSEQUAL:
-                $$ = MinusAssignExpression($1, $3, yylineno);
+                $$ = new MinusAssignExpression(*$1, *$3, yylineno);
                 break;
             case MULTEQUAL:
-                $$ = MultAssignExpression($1, $3, yylineno);
+                $$ = new MultAssignExpression(*$1, *$3, yylineno);
                 break;
             case DIVEQUAL:
-                $$ = DivAssignExpression($1, $3, yylineno);
+                $$ = new DivAssignExpression(*$1, *$3, yylineno);
                 break;
             case MODEQUAL:
-                $$ = ModAssignExpression($1, $3, yylineno);
+                $$ = new ModAssignExpression(*$1, *$3, yylineno);
                 break;
             case POWEQUAL:
-                $$ = PowAssignExpression($1, $3, yylineno);
+                $$ = new PowAssignExpression(*$1, *$3, yylineno);
                 break;
             case ANDEQUAL:
-                $$ = AndAssignExpression($1, $3, yylineno);
+                $$ = new AndAssignExpression(*$1, *$3, yylineno);
                 break;
             case OREQUAL:
-                $$ = OrAssignExpression($1, $3, yylineno);
+                $$ = new OrAssignExpression(*$1, *$3, yylineno);
                 break;
             case COLONEQUAL:
-                $$ = ColonAssignExpression($1, $3, yylineno);
+                $$ = new ColonAssignExpression(*$1, *$3, yylineno);
                 break;
             default:
+                $$ = new AssignExpression(*$1, *$3, yylineno);
         }
         
     }
@@ -302,7 +313,7 @@ logical_and_expression: logical_and_expression AND equality_expression { $$ = ne
     ;
 
 equality_expression: equality_expression TK_EQUAL relational_expression { $$ = new EqualExpression($1, $3, yylineno); }
-    | equality_expression  NOT_EQUAL relational_expression { $$ = new NotEqual($1, $3, yylineno); }
+    | equality_expression  NOT_EQUAL relational_expression { $$ = new NotEqualExpression($1, $3, yylineno); }
     | relational_expression { $$ = $1; }
     ;
     
@@ -334,16 +345,16 @@ unary_expression: TK_INCREASE unary_expression { $$ = new UnaryExpression(INCREM
     | postfix_expression {$$ = $1; }
     ;
 
-postfix_expression: postfix_expression TK_INCREASE { $$ = new PostIncrementExpression((IdExpr*)$1, yylineno); }
-    | postfix_expression TK_DECREASE { $$ = new PostDecrementExpression((IdExpr*)$1, yylineno); }
-    | postfix_expression '(' argument_expression_list ')' { $$ = new FunctionCallExpression((IdExpr*)$1, *$3, yylineno); }
-    | postfix_expression '(' ')' { $$ = new FunctionCallExpression((IdExpr*)$1, *(new ArgumentsList), yylineno); }
-    | postfix_expression '[' expression ']' { $$ = new ArrayExpression((IdExpr*)$1, $3, yylineno); }
-    | postfix_expression '.'primary_expression { $$ = new FunctionInvocationExpression((IdExpr*)$1, $3, yylineno); }
+postfix_expression: postfix_expression TK_INCREASE { $$ = new PostIncrementExpression((IdExpression*)$1, yylineno); }
+    | postfix_expression TK_DECREASE { $$ = new PostDecrementExpression((IdExpression*)$1, yylineno); }
+    | postfix_expression '(' argument_expression_list ')' { $$ = new FunctionCallExpression((IdExpression*)$1, *$3, yylineno); }
+    | postfix_expression '(' ')' { $$ = new FunctionCallExpression((IdExpression*)$1, *(new ArgumentsList), yylineno); }
+    | postfix_expression '[' expression ']' { $$ = new ArrayExpression((IdExpression*)$1, $3, yylineno); }
+    | postfix_expression '.'primary_expression { $$ = new FunctionInvocationExpression((IdExpression*)$1, $3, yylineno); }
     | primary_expression { $$ = $1; }
     ;
 
-argument_expression_list: logical_or_expression ',' logical_or_expression {$$ = $1;  $$->push_back($3);}
+argument_expression_list: argument_expression_list ',' logical_or_expression {$$ = $1;  $$->push_back($3);}
     | logical_or_expression { $$ = new ArgumentsList; $$->push_back($1);}
     ; 
 

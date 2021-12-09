@@ -11,9 +11,10 @@ class Declaration;
 class Parameter;
 class Statement;
 class Declarator;
+class Initializer;
 
 typedef list<Declarator *> DeclaratorList;
-typedef list<Expression *> InitializerList;
+typedef list<Initializer *> InitializerList;
 typedef list<Parameter* > ParametersList;
 typedef list<Type>TypeList;
 typedef list<Statement *> StatementList;
@@ -103,14 +104,14 @@ class DeclarationList{
 
 class VarDeclaration : public Statement{
     public:
-        VarDeclaration(DeclaratorList declaratorsList, Initializer * initializer, Type type, int line ) {
+        VarDeclaration(DeclaratorList declaratorsList, InitializerList initializerList, Type type, int line ) {
             this->declaratorsList = declaratorsList;
-            this->initializer = initializer;
+            this->initializerList = initializerList;
             this->type = type;
         }
 
         DeclaratorList declaratorsList;
-        Initializer * initializer;
+        InitializerList initializerList;
         Type type;
         int line;
 
@@ -272,14 +273,14 @@ class BinaryExpression : public Expression{
 
 class BinaryAssignExpression : public Expression{
     public:
-        BinaryAssignExpression(ExpressionList leftExpressionList, ExpressionList rightExpressionList, int line){
+        BinaryAssignExpression(ExpressionList leftExpressionList, InitializerList rightExpressionList, int line){
             this->leftExpressionList = leftExpressionList;
             this->rightExpressionList = rightExpressionList;
             this->line = line;
         }
 
         ExpressionList leftExpressionList;
-        ExpressionList rightExpressionList;
+        InitializerList rightExpressionList;
         int line;
 };
 
@@ -293,7 +294,7 @@ class name##Expression : public BinaryExpression{\
 #define IMPLEMENT_BINARY_ASSIGN_EXPRESSION(name) \
 class name##Expression : public BinaryAssignExpression{\
     public: \
-        name##Expression(ExpressionList leftExpressionList, ExpressionList rightExpressionList, int line) : BinaryAssignExpression(leftExpressionList, rightExpressionList, line){}\
+        name##Expression(ExpressionList leftExpressionList, InitializerList rightExpressionList, int line) : BinaryAssignExpression(leftExpressionList, rightExpressionList, line){}\
         Type getType(); \
 };
 
@@ -478,7 +479,8 @@ class JumpStatement : public Statement{
 class ExpressionStatement : public Statement{
     public:
         ExpressionStatement(Expression * expression, int line){
-
+            this->expression = expression;
+            this->line = line;
         }
 
         Expression * expression;

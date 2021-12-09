@@ -23,5 +23,6 @@ int main(int argc, char* argv[]){
     yyin = f;
 
     yyparse();
+
     return 0;
 }
