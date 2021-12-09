@@ -77,15 +77,15 @@ class Initializer{
 
 class Declarator{
     public:
-        Declarator(string id, Expression * arrayDeclarationValues, bool isArray, int line){
+        Declarator(string id, Expression * arraySize, bool isArray, int line){
             this->id = id;
-            this->arrayDeclarationValues = arrayDeclarationValues;
+            this->arraySize = arraySize;
             this->isArray = isArray;
             this->line = line;
         }
 
         string id;
-        Expression * arrayDeclarationValues;
+        Expression * arraySize;
         bool isArray;
         int line;
 };
@@ -108,6 +108,7 @@ class VarDeclaration : public Statement{
             this->declaratorsList = declaratorsList;
             this->initializerList = initializerList;
             this->type = type;
+            this->line = line - 1;
         }
 
         DeclaratorList declaratorsList;

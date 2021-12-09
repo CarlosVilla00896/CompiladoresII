@@ -1,0 +1,13 @@
+Validaciones semanticas declaracion variables:
+
+Cuando es array
+    *Cuando hay initializer
+        -creo que cuando se usa declaracion, no hay initializer
+    *Cuando no hay initializer
+        -que el size del declarator no sea nulo y que sea de tipo entero
+Cuando no es array
+    *Cuando hay initializer
+        -Hay nulltype y se ignora, se recorrea la lista de expresiones y se compara el type de las expresiones con el type del declarator. Tienenen que ser iguales
+    *Cuando no hay initializer
+        -Nada
+    

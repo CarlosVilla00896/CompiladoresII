@@ -2,7 +2,7 @@ enum Type{
     INVALID,
     STRING,
     INT,
-    FLOAT,
+    FLOAT32,
     VOID,
     INT_ARRAY,
     FLOAT_ARRAY,

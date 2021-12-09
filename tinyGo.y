@@ -150,7 +150,7 @@ parameter_declaration: ID type { $$ = new Parameter($1, (Type)$2, false, yylinen
 
 type: INT_TYPE { $$ = INT; }
     | BOOL_TYPE { $$ = BOOL; }
-    | FLOAT32_TYPE { $$ = FLOAT; }
+    | FLOAT32_TYPE { $$ = FLOAT32; }
     ;
 
 return_type_list: return_type_list ',' type { $$ = $1; $$->push_back((Type)$3); }
