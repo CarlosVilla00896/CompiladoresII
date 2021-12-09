@@ -72,7 +72,8 @@
 %token GREATER_OR_EQUAL LESS_OR_EQUAL TK_EQUAL NOT_EQUAL
 
 %type<statement_list_t> package_declaration import_declaration program statement_list
-%type<statement_t> external_declarations function_definition var_declaration block_statement statement
+%type<statement_t> external_declarations function_definition block_statement statement
+%type<var_declaration_t> var_declaration
 %type<expression_t> expression assignment_expression logical_or_expression logical_and_expression equality_expression relational_expression 
 %type<expression_t> term_expression factor_expression pow_expression unary_expression postfix_expression primary_expression
 %type<params_list_t> parameters_list

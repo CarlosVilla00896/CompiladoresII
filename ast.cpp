@@ -149,8 +149,14 @@ int VarDeclaration::evaluateSemantic(){
             }
         }
         declaratorIt++;
-    }
 
+        // if(!variableExists(declarator->id)){
+        //     context->variables[declarator->id] = this->type;
+        // }else{
+        //     cout<<"error: redefinition of variable: "<< declarator->id<< " line: "<<this->line <<endl;
+        //     exit(0);
+        // }
+    }
     
     return 0;
 }

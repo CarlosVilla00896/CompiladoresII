@@ -125,11 +125,11 @@ class VarDeclaration : public Statement{
 
 class GlobalDeclaration : public Statement{
     public:
-        GlobalDeclaration(Statement * declarationStatement){
+        GlobalDeclaration(VarDeclaration * declarationStatement){
             this->declarationStatement = declarationStatement;
         }
 
-        Statement * declarationStatement;
+        VarDeclaration * declarationStatement;
 
         int evaluateSemantic();
         StatementKind getKind(){
