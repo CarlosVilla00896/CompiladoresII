@@ -38,10 +38,10 @@ DIGIT [0-9]
 "bool" { return BOOL_TYPE; }
 
 
-\".*\" { yylval.string_t = yytext; return STRING_LITERAL; }
+\".*\" { yylval.string_t = strdup(yytext); return STRING_LITERAL; }
 {DIGIT}+ {  yylval.int_t = atoi(yytext); return INT_CONSTANT; }
 {DIGIT}+"."{DIGIT}+ {  yylval.float_t = atof(yytext); return FLOAT_CONSTANT; }
-[a-zA-Z]({DIGIT}|[a-zA-Z_0-9]|_)* { yylval.string_t = yytext; return ID; }
+[a-zA-Z]({DIGIT}|[a-zA-Z_0-9]|_)* { yylval.string_t = strdup(yytext); return ID; }
 
 "+=" { return PLUS_EQUAL; }
 "-=" { return MINUS_EQUAL; }

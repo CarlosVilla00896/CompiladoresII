@@ -248,7 +248,7 @@ class StringExpression : public Expression{
 
 class IdExpression : public Expression{
     public:
-        IdExpression(string id, int line){
+        IdExpression(string value, int line){
             this->value = value;
             this->line = line;
         }

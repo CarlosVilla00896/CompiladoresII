@@ -52,8 +52,8 @@ func main3() {
     /*
     Operadores básicos
     */
-    a:= rand.Float32() * 100
-    b:= rand.Float32() * 100
+    a:= rand.sloat32() * 100
+    b:= rand.sloat32() * 100
  
     fmt.Println("a = ", a)
     fmt.Println("b = ", b)

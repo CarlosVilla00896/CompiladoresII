@@ -87,7 +87,7 @@ Type getLocalVariableType(string id){
             return currContext->variables[id];
         currContext = currContext->prev;
     }
-    //Parece que esta validacion no es la correcta
+
     if(!context->variables.empty())
         return context->variables[id];
     return INVALID;
@@ -108,62 +108,88 @@ bool variableExists(string id){
     if(value != 0)
       return true;
   }
-  //deberia retornar false? Al parecer no checa el primer contexto
+  if( globalVariables[id] != 0 ){
+      return true;
+  }
   return false;
 }
 
-int VarDeclaration::evaluateSemantic(){
-    list<Declarator *>::iterator declaratorIt = this->declaratorsList.begin();
-    list<Initializer *>::iterator initializerIt = this->initializerList.begin();
+void AuxVarDeclaration(DeclaratorList declaratorsList, InitializerList initializerList, Type type, int line, bool isGlobalDeclaration){
+    list<Declarator *>::iterator declaratorIt = declaratorsList.begin();
+    list<Initializer *>::iterator initializerIt = initializerList.begin();
 
-    if( !this->initializerList.empty()){
-        if( this->declaratorsList.size() != this->initializerList.size()){
-            cout<<"Error: Initializers list must match declarators list. Line: "<<this->line<<endl;
+    if( !initializerList.empty()){
+        if( declaratorsList.size() != initializerList.size()){
+            cout<<"Error: Initializers list must match declarators list. Line "<<line<<endl;
             // exit(0);
         }
 
-        if(this->type != NULLTYPE){
-            while(initializerIt != this->initializerList.end() ){
+        if(type != NULLTYPE){
+            while(initializerIt != initializerList.end() ){
                 Initializer * init = (*initializerIt);
-                if(init->initializer->getType() != this->type){
-                    cout<<"Value of type "<<getTypeName(init->initializer->getType())<<" cannot be assigned to "<<getTypeName(this->type)<<" type. Line: "<<this->line<<endl;
+                if(init->initializer->getType() != type){
+                    cout<<"Error in line "<<line<<". Value of type "<<getTypeName(init->initializer->getType())<<" cannot be assigned to "<<getTypeName(type)<<" type."<<endl;
                     // exit(0);
                 }
-
                 initializerIt++;
             }
         }
     }
-
-    while(declaratorIt != this->declaratorsList.end()){
+    int declaratorItIndex = 0;
+    while(declaratorIt != declaratorsList.end()){
         Declarator * declarator = (*declaratorIt);
         if(declarator->isArray){
             if(declarator->arraySize == NULL ){
-                cout<<"error: storage size of: "<<declarator->id<< " array is unknown. Line: "<<this->line<<endl;\
+                cout<<"Error: storage size of: "<<declarator->id<< " array is unknown. Line: "<<line<<endl;\
                 exit(0);
             }
 
             if(declarator->arraySize->getType() != INT){
-                cout<<"error: storage size must be an int value"<< ". Line: "<<this->line<<endl;
+                cout<<"Error: storage size of '"<<declarator->id<<"' must be an int value"<< ". Line: "<<line<<endl;
                 exit(0);
             }
         }
-        declaratorIt++;
 
-        // if(!variableExists(declarator->id)){
-        //     context->variables[declarator->id] = this->type;
-        // }else{
-        //     cout<<"error: redefinition of variable: "<< declarator->id<< " line: "<<this->line <<endl;
-        //     exit(0);
-        // }
+       if(!variableExists(declarator->id)){
+            if(type == NULLTYPE){
+                //Esto es para asignacion dinamica de tipo
+                list<Initializer *>::iterator initializerIt2 = initializerList.begin();
+                advance(initializerIt2, declaratorItIndex);
+                Initializer * initializer  = (*initializerIt2);
+                if(isGlobalDeclaration){
+                    globalVariables[declarator->id] = type;
+                }else{
+                    context->variables[declarator->id] = initializer->initializer->getType();
+                }
+                
+            }else{
+                if(isGlobalDeclaration){
+                    globalVariables[declarator->id] = type;
+                }else{
+                    context->variables[declarator->id] = type;
+                }
+            }
+            
+        }else{
+            cout<<"Error: redefinition of variable '"<< declarator->id<< "'. Line: "<<line <<endl;
+            exit(0);
+        }
+       
+        declaratorIt++;
+        declaratorItIndex++;
     }
-    
-    return 0;
+}
+
+
+int VarDeclaration::evaluateSemantic(){
+    AuxVarDeclaration(this->declaratorsList, this->initializerList, this->type, this->line, false);
+    return 1;
 }
 
 int GlobalDeclaration::evaluateSemantic(){
-    this->declarationStatement->evaluateSemantic();
-    return 0;
+    VarDeclaration * varDeclaration = this->declarationStatement;
+    AuxVarDeclaration(varDeclaration->declaratorsList, varDeclaration->initializerList, varDeclaration->type, varDeclaration->line, true);
+    return 2;
 }
 
 int BlockStatement::evaluateSemantic(){
@@ -177,12 +203,20 @@ int BlockStatement::evaluateSemantic(){
 
         itd++;
     }
-    return 0;
+    return 3;
 }
 
 int FunctionDefinition::evaluateSemantic(){
+    pushContext();
+
+    if(this->statement != NULL){
+        this->statement->evaluateSemantic();
+    }
+
+    popContext();
+
+    return 4;
     
-    return 0;
 }
 
 int IfStatement::evaluateSemantic(){
