@@ -9,7 +9,7 @@ var i, j int = 1, 5
 var ruby, python, java = true, 5.4, 5
 
 
-func swap(x int, y float32) (int, float32) {
+func swap(x int, y float32, lol bool, ylo int) (int, float32) {
     var ab, ba int = 1, 2
 	k := 3
 	c, python, java := true, false, "no!"
@@ -19,7 +19,10 @@ func swap(x int, y float32) (int, float32) {
     x := [5]int{10, 20, 30, 40, 50}
 }
 
-func swap(x bool, y float32) (bool, float32) {
+
+func swap2(x bool, y float32) (bool, float32) {
+
+    var lol int
 	return v
 }
 

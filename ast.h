@@ -150,6 +150,8 @@ class Parameter{
         Type type;
         bool isArray;
         int line;
+
+        int evaluateSemantic();
 };
 
 class BlockStatement : public Statement {
@@ -172,7 +174,7 @@ class FunctionDefinition : public Statement {
     public: 
         FunctionDefinition( string id, ParametersList params, Type type, TypeList typeList, string functionKind, Statement * statement, int line){
             this->id = id;
-            this->parametersList = parametersList;
+            this->params = params;
             this->type = type;
             this->functionKind = functionKind;
             this->statement = statement;
@@ -180,7 +182,7 @@ class FunctionDefinition : public Statement {
         }
 
         string id;
-        ParametersList parametersList;
+        ParametersList params;
         Type type;
         TypeList typeList;
         string functionKind;

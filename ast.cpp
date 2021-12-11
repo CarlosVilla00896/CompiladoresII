@@ -26,6 +26,8 @@ class ContextStack{
 class FunctionInfo{
     public:
         Type returnType;
+        bool hasMultipleReturnTypes;
+        list<Type> returnTypeList;
         list<Parameter *> parameters;
 };
 
@@ -156,8 +158,9 @@ void AuxVarDeclaration(DeclaratorList declaratorsList, InitializerList initializ
                 list<Initializer *>::iterator initializerIt2 = initializerList.begin();
                 advance(initializerIt2, declaratorItIndex);
                 Initializer * initializer  = (*initializerIt2);
+
                 if(isGlobalDeclaration){
-                    globalVariables[declarator->id] = type;
+                    globalVariables[declarator->id] = initializer->initializer->getType();
                 }else{
                     context->variables[declarator->id] = initializer->initializer->getType();
                 }
@@ -206,8 +209,50 @@ int BlockStatement::evaluateSemantic(){
     return 3;
 }
 
+int Parameter::evaluateSemantic(){
+    if(!variableExists(this->id)){
+        context->variables[this->id] = this->type;
+    }else{
+        cout<<"Error in line: Redefinition of variable '"<<this->id<<"'. Line "<<this->line<<endl;
+        exit(0);
+    }
+    return 0;
+}
+
+void addFunctionDeclaration(string id, ParametersList params, TypeList returnTypeList, Type returnType, bool hasMultipleReturnTypes, int line){
+    if(methods[id] != 0){
+        cout<<"Error in line "<<line<<": Redefinition of function '"<<id<<"'."<<endl;
+        exit(0);
+    }
+    methods[id] = new FunctionInfo();
+    methods[id]->returnType = returnType;
+    methods[id]->parameters = params;
+    methods[id]->returnTypeList = returnTypeList;
+    if( hasMultipleReturnTypes ){
+        methods[id]->hasMultipleReturnTypes = true;
+    }else{
+        methods[id]->hasMultipleReturnTypes = false;
+    }
+}
+
 int FunctionDefinition::evaluateSemantic(){
+    if(this->params.size() > 4){
+        cout<<"Error in line "<<this->line<<": Function '"<<this->id<<"' can't have more than 4 paramaters."<<endl;
+        exit(0);
+    }
+    if(this->typeList.empty()){
+        addFunctionDeclaration(this->id, this->params, this->typeList, this->type, false, this->line);
+    }else{
+        addFunctionDeclaration(this->id, this->params, this->typeList, this->type, true, this->line);
+    }
+    
     pushContext();
+
+    list<Parameter* >::iterator it = this->params.begin();
+    while(it != this->params.end()){
+        (*it)->evaluateSemantic();
+        it++;
+    }
 
     if(this->statement != NULL){
         this->statement->evaluateSemantic();
