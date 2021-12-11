@@ -323,18 +323,22 @@ int ForStatement::evaluateSemantic(){
 }
 
 int ReturnStatement::evaluateSemantic(){
-    
+    list<Expression *>::iterator iterator = this->expressionList.begin();
+
+    while(iterator != this->expressionList.end()){
+        (*iterator)->getType();
+        iterator++;
+    }
     return 0;
 }
 
 int JumpStatement::evaluateSemantic(){
-    
+    //nada
     return 0;
 }
 
 int ExpressionStatement::evaluateSemantic(){
-    
-    return 0;
+    return this->expression->getType();
 }
 
 Type IntExpression::getType(){
