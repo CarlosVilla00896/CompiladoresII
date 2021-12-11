@@ -359,44 +359,107 @@ Type StringExpression::getType(){
 
 Type IdExpression::getType(){
     Type value;
+    if(context != NULL){
+        value = getLocalVariableType(this->value);
+        if(value != INVALID)
+            return value;
+    }
 
-    return value;
+    value = getVariableType(this->value);
+
+    if(value == INVALID){
+        cout<<"Error in line "<<this->line<<": Variable '"<<this->value<<"' was not declared in this scope."<<endl;
+        exit(0);
+    }
+    return INVALID;
+}
+Type getUnaryType(Type expressionType, int unaryOperation, int line){
+    switch(unaryOperation){
+        case INCREMENT:
+        case DECREMENT:
+            if(expressionType == INT || expressionType == FLOAT32)
+                return expressionType;
+        case NOT:
+            if(expressionType == BOOL)
+                return BOOL;
+    }
+
+    cerr<<"Error in line "<<line<<": Invalid type"<<endl;
+    exit(0);
 }
 
 Type UnaryExpression::getType(){
-    Type value;
 
-    return value;
+    Type expressionType = this->expression->getType();
+    return getUnaryType(expressionType, this->type, this->line);
 }
 
 Type PostIncrementExpression::getType(){
-    Type value;
+    
+    if(this->expression->getType() != INT && this->expression->getType() != FLOAT32){
+        cerr<<"Error in line "<<this->line<<": Invalid type"<<endl;
+        exit(0);
+    }
 
-    return value;
+    return this->expression->getType();
 }
 
 Type PostDecrementExpression::getType(){
-    Type value;
+    
+   if(this->expression->getType() != INT && this->expression->getType() != FLOAT32){
+        cerr<<"Error in line "<<this->line<<": Invalid type"<<endl;
+        exit(0);
+    }
 
-    return value;
+    return this->expression->getType();
 }
 
 Type ArrayExpression::getType(){
-    Type value;
+    if(this->expression->getType() != INT){
+        cout<<"Error in line "<<this->line<<": Storage size of '"<<this->id->value<<"' must be an int value."<<endl;
+    }
 
-    return value;
+    return this->id->getType();
 }
 
 Type FunctionCallExpression::getType(){
-    Type value;
+    FunctionInfo * funcInfo = methods[this->id->value];
 
-    return value;
+    if( funcInfo == NULL){
+        cout<<"Error in line "<<this->line<<": Function '"<<this->id->value<<"' not found, line: "<<endl;
+        exit(0);
+    }
+
+    Type funcType = funcInfo->returnType;
+
+    if(funcInfo->parameters.size() > this->args.size()){
+        cout<<"Error in line "<<this->line<<": Too few arguments to function '"<<this->id->value<<"'."<<endl;
+        exit(0);
+    }
+    if(funcInfo->parameters.size() < this->args.size()){
+        cout<<"Error in line "<<this->line<<": Too many arguments to function '"<<this->id->value<<"'."<<endl;
+        exit(0);
+    }
+
+    list<Parameter *>::iterator paramIt = funcInfo->parameters.begin();
+    list<Expression *>::iterator argsIt = this->args.begin();
+    while(paramIt != funcInfo->parameters.end() && argsIt != this->args.end()){
+        string paramType = getTypeName((*paramIt)->type);
+        string argType = getTypeName((*argsIt)->getType());
+        if( paramType != argType){
+            cout<<"Error in line '"<<this->line<<"': Invalid conversion from: "<< argType <<" to " <<paramType<< " line: "<<this->line <<endl;
+            exit(0);
+        }
+        paramIt++;
+        argsIt++;
+    }
+
+    return funcType;
 }
 
 Type FunctionInvocationExpression::getType(){
-    Type value;
-
-    return value;
+    
+    return this->getType();
 }
 
 Type AddExpression::getType(){

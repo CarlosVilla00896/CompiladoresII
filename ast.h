@@ -329,11 +329,11 @@ class PostIncrementExpression: public Expression{
 
 class PostDecrementExpression: public Expression{
     public:
-        PostDecrementExpression(IdExpression * id, int line){
-            this->id = id;
+        PostDecrementExpression(Expression * expression, int line){
+            this->expression = expression;
             this->line = line;
         }
-        IdExpression * id;
+        Expression * expression;
         int line;
 
         Type getType();
