@@ -245,7 +245,7 @@ int FunctionDefinition::evaluateSemantic(){
     }else{
         addFunctionDeclaration(this->id, this->params, this->typeList, this->type, true, this->line);
     }
-    
+
     pushContext();
 
     list<Parameter* >::iterator it = this->params.begin();
@@ -265,17 +265,60 @@ int FunctionDefinition::evaluateSemantic(){
 }
 
 int IfStatement::evaluateSemantic(){
+    
+    if( this->initExpression != NULL ){
+        this->initExpression->getType();
+    }
 
+    if(this->conditionalExpression->getType() != BOOL){
+        cout<<"Error in line "<<this->line<<": Expression for if conditional statement must be boolean"<<endl;
+    }
+    pushContext();
+    this->trueStatement->evaluateSemantic();
+    popContext();
     return 0;
 }
 
 int ElseStatement::evaluateSemantic(){
+
+    if( this->initExpression != NULL ){
+        this->initExpression->getType();
+    }
+
+    if(this->conditionalExpression->getType() != BOOL){
+        cout<<"Error in line "<<this->line<<": Expression for if conditional statement must be boolean"<<endl;
+    }
+    pushContext();
+    this->trueStatement->evaluateSemantic();
+    popContext();
+    if(this->falseStatement != NULL)
+        this->falseStatement->evaluateSemantic();
+    popContext();
 
     return 0;
 }
 
 int ForStatement::evaluateSemantic(){
 
+    if(this->initExpr != NULL){
+        this->initExpr->getType();
+    }
+
+    if(this->conditionalExpr != NULL){
+        if(this->conditionalExpr->getType() != BOOL){
+            cout<<"Error in line "<<this->line<<": Conditional expression in for statement must be boolean."<<endl;
+        } 
+    }
+
+    if(this->initExpr != NULL){
+        this->initExpr->getType();
+    }
+
+    pushContext();
+    if(this->statement != NULL){
+        this->statement->evaluateSemantic();
+    }
+    popContext();
     return 0;
 }
 
