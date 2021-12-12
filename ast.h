@@ -370,14 +370,16 @@ class FunctionCallExpression : public Expression{
 
 class FunctionInvocationExpression : public Expression{
     public:
-        FunctionInvocationExpression(IdExpression * id, Expression * expression, int line){
+        FunctionInvocationExpression(IdExpression * id, IdExpression * expression, ArgumentsList args, int line){
             this->id = id;
             this->expression = expression;
+            this->args = args;
             this->line = line;
         }
 
         IdExpression * id;
-        Expression * expression;
+        IdExpression * expression;
+        ArgumentsList args;
         int line;
 
         Type getType();

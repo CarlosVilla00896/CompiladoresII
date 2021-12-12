@@ -390,10 +390,8 @@ Type getUnaryType(Type expressionType, int unaryOperation, int line){
 }
 
 Type UnaryExpression::getType(){
-
+    //Tambien hay error para las unary cuando hay dos unary seguido y el primero es un bool
     Type expressionType = this->expression->getType();
-    // IdExpression * id = (IdExpression * ) this->expression; 
-    // cout<<"El tipo es de la variable "<<id->value<<" es "<<expressionType<<". Line "<<this->line<<endl;
     return getUnaryType(expressionType, this->type, this->line);
 }
 
@@ -461,10 +459,41 @@ Type FunctionCallExpression::getType(){
 }
 
 Type FunctionInvocationExpression::getType(){
-    //Aquie es el error
-    //Tambien hay error para las unary cuando hay dos unary seguido y el primero es un bool
-    //Al parecer hay un error en unary y los post cuando la variable es global. Puede ser que para las otras expressiones tambien
-    return this->getType();
+    this->id->getType();
+    
+
+    FunctionInfo * funcInfo = methods[this->expression->value];
+
+    if( funcInfo == NULL){
+        cout<<"Error in line "<<this->line<<": Function '"<<this->expression->value<<"' not found, line: "<<endl;
+        exit(0);
+    }
+
+    Type funcType = funcInfo->returnType;
+
+    // if(funcInfo->parameters.size() > this->args.size()){
+    //     cout<<"Error in line "<<this->line<<": Too few arguments to function '"<<this->id->value<<"'."<<endl;
+    //     exit(0);
+    // }
+    // if(funcInfo->parameters.size() < this->args.size()){
+    //     cout<<"Error in line "<<this->line<<": Too many arguments to function '"<<this->id->value<<"'."<<endl;
+    //     exit(0);
+    // }
+
+    // list<Parameter *>::iterator paramIt = funcInfo->parameters.begin();
+    // list<Expression *>::iterator argsIt = this->args.begin();
+    // while(paramIt != funcInfo->parameters.end() && argsIt != this->args.end()){
+    //     string paramType = getTypeName((*paramIt)->type);
+    //     string argType = getTypeName((*argsIt)->getType());
+    //     if( paramType != argType){
+    //         cout<<"Error in line '"<<this->line<<"': Invalid conversion from: "<< argType <<" to " <<paramType<< " line: "<<this->line <<endl;
+    //         exit(0);
+    //     }
+    //     paramIt++;
+    //     argsIt++;
+    // }
+
+    return funcType;
 }
 
 Type AddExpression::getType(){

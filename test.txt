@@ -1,6 +1,8 @@
 package main
 import "fmt"
 
+var fmt int
+var Println int
 var a bool = true
 var z float32
 var isVar, b, c int
@@ -8,13 +10,16 @@ var intArray [10]int
 var i, j int = 1, 5
 var ruby, python, java = true, 5.4, 5
 
+func Println(){
+
+}
 
 func swap(x int, y float32, lol bool, ylo int) (int) {
     var ab, ba int = 1, 2
 	k := 3
 	c, python, java := true, false, "no!"
     theArray[0] = "India"
-	//fmt.Println(i)
+	fmt.Println(i)
     var strArray [5]int
     x := [5]int{10, 20, 30, 40, 50}
 }
@@ -93,7 +98,7 @@ func loops() {
         fmt.Println(n)
     }
 
-	return v, 45
+	return i, 45
 }
 
 func BubbleSort(array[] int, size int)[]int {

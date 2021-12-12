@@ -351,7 +351,8 @@ postfix_expression: postfix_expression TK_INCREASE { $$ = new PostIncrementExpre
     | postfix_expression '(' argument_expression_list ')' { $$ = new FunctionCallExpression((IdExpression*)$1, *$3, yylineno); }
     | postfix_expression '(' ')' { $$ = new FunctionCallExpression((IdExpression*)$1, *(new ArgumentsList), yylineno); }
     | postfix_expression '[' expression ']' { $$ = new ArrayExpression((IdExpression*)$1, $3, yylineno); }
-    | postfix_expression '.'primary_expression { $$ = new FunctionInvocationExpression((IdExpression*)$1, $3, yylineno); }
+    | postfix_expression '.'primary_expression '(' ')'{ $$ = new FunctionInvocationExpression((IdExpression*)$1, (IdExpression*)$3, *(new ArgumentsList), yylineno); }
+    | postfix_expression '.'primary_expression '(' argument_expression_list ')'{ $$ = new FunctionInvocationExpression((IdExpression*)$1, (IdExpression*)$3, *$5, yylineno); }
     | primary_expression { $$ = $1; }
     ;
 
