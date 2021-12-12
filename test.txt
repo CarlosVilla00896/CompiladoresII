@@ -20,14 +20,14 @@ func swap(x int, y float32, lol bool, ylo int) (int) {
 }
 
 
-func swap2(x bool, y int) (bool) {
+func swa(x bool, y int) (bool) {
     swap(5, 4.5, !true, 4)
-    var probar int
+    var probar int = 4
     probar++
     !x
-    ++y
     var lol int
-	return lol
+	isVar++
+    return lol
 }
 
 func main() {

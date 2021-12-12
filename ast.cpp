@@ -85,8 +85,9 @@ void popContext(){
 Type getLocalVariableType(string id){
     ContextStack * currContext = context;
     while(currContext != NULL){
-        if(currContext->variables[id] != 0)
+        if(currContext->variables[id] != 0){
             return currContext->variables[id];
+        }
         currContext = currContext->prev;
     }
 
@@ -102,18 +103,18 @@ Type getVariableType(string id){
     return INVALID;
 }
 
-bool variableExists(string id){
+Type variableExists(string id){
   Type value;
   if(context != NULL){
     value = getLocalVariableType(id);
     //context->variables[id] != 0
     if(value != 0)
-      return true;
+      return value;
   }
   if( globalVariables[id] != 0 ){
-      return true;
+      return globalVariables[id];
   }
-  return false;
+  return INVALID;
 }
 
 void AuxVarDeclaration(DeclaratorList declaratorsList, InitializerList initializerList, Type type, int line, bool isGlobalDeclaration){
@@ -123,7 +124,7 @@ void AuxVarDeclaration(DeclaratorList declaratorsList, InitializerList initializ
     if( !initializerList.empty()){
         if( declaratorsList.size() != initializerList.size()){
             cout<<"Error: Initializers list must match declarators list. Line "<<line<<endl;
-            // exit(0);
+            exit(0);
         }
 
         if(type != NULLTYPE){
@@ -131,7 +132,7 @@ void AuxVarDeclaration(DeclaratorList declaratorsList, InitializerList initializ
                 Initializer * init = (*initializerIt);
                 if(init->initializer->getType() != type){
                     cout<<"Error in line "<<line<<". Value of type "<<getTypeName(init->initializer->getType())<<" cannot be assigned to "<<getTypeName(type)<<" type."<<endl;
-                    // exit(0);
+                    exit(0);
                 }
                 initializerIt++;
             }
@@ -360,7 +361,7 @@ Type StringExpression::getType(){
 Type IdExpression::getType(){
     Type value;
     if(context != NULL){
-        value = getLocalVariableType(this->value);
+        value = variableExists(this->value);
         if(value != INVALID)
             return value;
     }
@@ -391,6 +392,8 @@ Type getUnaryType(Type expressionType, int unaryOperation, int line){
 Type UnaryExpression::getType(){
 
     Type expressionType = this->expression->getType();
+    // IdExpression * id = (IdExpression * ) this->expression; 
+    // cout<<"El tipo es de la variable "<<id->value<<" es "<<expressionType<<". Line "<<this->line<<endl;
     return getUnaryType(expressionType, this->type, this->line);
 }
 
@@ -458,7 +461,9 @@ Type FunctionCallExpression::getType(){
 }
 
 Type FunctionInvocationExpression::getType(){
-    
+    //Aquie es el error
+    //Tambien hay error para las unary cuando hay dos unary seguido y el primero es un bool
+    //Al parecer hay un error en unary y los post cuando la variable es global. Puede ser que para las otras expressiones tambien
     return this->getType();
 }
 
