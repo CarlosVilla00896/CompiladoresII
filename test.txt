@@ -39,6 +39,7 @@ func main() {
 	 /*
     Operadores básicos
     */
+    var array[5] float32
     a:= rand.Sloat32() * 100
     b:= rand.Sloat32() * 100
 	

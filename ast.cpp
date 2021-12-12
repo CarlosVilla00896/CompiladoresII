@@ -43,6 +43,16 @@ map<string, Type> resultTypes ={
     {"BOOL,BOOL", BOOL},
 };
 
+map<string, Type> booleanResultTypes ={
+    {"INT,INT", BOOL},
+    {"FLOAT32,FLOAT32", BOOL},
+    {"INT,FLOAT32", BOOL},
+    {"FLOAT32,INT", BOOL},
+    {"BOOL,BOOL", BOOL},
+};
+
+
+
 
 string getTypeName(Type type){
     switch(type){
@@ -469,6 +479,15 @@ Type FunctionInvocationExpression::getType(){
         exit(0);
     }
 
+    list<Expression *>::iterator argsIt = this->args.begin();
+
+    while( argsIt != this->args.end()){
+        Expression * expression = (*argsIt);
+        expression->getType();
+
+        argsIt++;
+    }
+
     Type funcType = funcInfo->returnType;
 
     // if(funcInfo->parameters.size() > this->args.size()){
@@ -496,89 +515,29 @@ Type FunctionInvocationExpression::getType(){
     return funcType;
 }
 
-Type AddExpression::getType(){
-    Type value;
+#define IMPLEMENT_BINARY_GET_TYPE(name)\
+Type name##Expression::getType(){\
+    string leftType = getTypeName(this->leftExpression->getType());\
+    string rightType = getTypeName(this->rightExpression->getType());\
+    Type resultType = resultTypes[leftType+","+rightType];\
+    if(resultType == 0){\
+        cerr<< "Error in line "<<this->line<<": Cannot perform arithmetic operation between type "<< leftType <<" and type "<< rightType <<endl;\
+        exit(0);\
+    }\
+    return resultType; \
+}\
 
-    return value;
-}
-
-Type SubExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type MultExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type DivExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type ModExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type PowExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type EqualExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type NotEqualExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type GteExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type LteExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type GtExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type LtExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type LogicalAndExpression::getType(){
-    Type value;
-
-    return value;
-}
-
-Type LogicalOrExpression::getType(){
-    Type value;
-
-    return value;
-}
+#define IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(name)\
+Type name##Expression::getType(){\
+    string leftType = getTypeName(this->leftExpression->getType());\
+    string rightType = getTypeName(this->rightExpression->getType());\
+    Type resultType = booleanResultTypes[leftType+","+rightType];\
+    if(resultType == 0){\
+        cerr<< "Error in line "<<this->line<<": Cannot perform boolean operation between type "<< leftType <<" and type "<< rightType <<endl;\
+        exit(0);\
+    }\
+    return BOOL; \
+}\
 
 Type AssignExpression::getType(){
     Type value;
@@ -641,5 +600,19 @@ Type ColonAssignExpression::getType(){
 }
 
 
+IMPLEMENT_BINARY_GET_TYPE(Add);
+IMPLEMENT_BINARY_GET_TYPE(Sub);
+IMPLEMENT_BINARY_GET_TYPE(Mult);
+IMPLEMENT_BINARY_GET_TYPE(Div);
+IMPLEMENT_BINARY_GET_TYPE(Mod);
+IMPLEMENT_BINARY_GET_TYPE(Pow);
 
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(Equal);
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(NotEqual);
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(Gte);
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(Lte);
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(Gt);
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(Lt);
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(LogicalAnd);
+IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(LogicalOr);
 
