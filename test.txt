@@ -14,14 +14,18 @@ func Println(){
 
 }
 
-func swap(x int, y float32, lol bool, ylo int) (int) {
+func Sloat32() int {
+
+}
+
+func swap(x int, y float32, lol bool, theArray[] int) (int) {
     var ab, ba int = 1, 2
 	k := 3
-	c, python, java := true, false, "no!"
-    theArray[0] = "India"
+	cola, pythona, javac := true, false, "no!"
+    theArray[0] = 5
 	fmt.Println(i)
     var strArray [5]int
-    x := [5]int{10, 20, 30, 40, 50}
+    xolo := [5]int{10, 20, 30, 40, 50}
 }
 
 
@@ -36,12 +40,17 @@ func swa(x bool, y int) (bool) {
 }
 
 func main() {
+    rand := 5
 	 /*
     Operadores básicos
     */
     var array[5] float32
-    a:= rand.Sloat32() * 100
-    b:= rand.Sloat32() * 100
+    ala:= rand.Sloat32() * 100
+    bala:= rand.Sloat32() * 100
+
+    if (array[j] > array[j+1]) {
+		array[j], array[j+1] = array[j+1], array[j]
+	}
 	
 	if 7%2 == 0 {
         fmt.Println("7 is even")
@@ -49,17 +58,7 @@ func main() {
         fmt.Println("7 is odd")
     }
 
-	if (array[j] > array[j+1]) {
-		array[j], array[j+1] = array[j+1], array[j]
-	}
 
-	if num := 9; num < 0 {
-        fmt.Println(num, "is negative")
-    } else if num < 10 {
-        fmt.Println(num, "has 1 digit")
-    } else {
-        fmt.Println(num, "has multiple digits")
-    }
 
     fmt.Println("a = ", a)
     fmt.Println("b = ", b)

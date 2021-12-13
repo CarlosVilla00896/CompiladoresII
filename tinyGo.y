@@ -129,7 +129,7 @@ function_definition: KW_FUNC ID '(' parameters_list ')' '(' return_type_list ')'
     }
     | KW_FUNC ID '(' parameters_list ')'  block_statement{
         TypeList * typeList = new TypeList;
-        $$ = new FunctionDefinition($2, *$4, NULLTYPE, *typeList, "nada", $6, yylineno);
+        $$ = new FunctionDefinition($2, *$4, VOID, *typeList, "nada", $6, yylineno);
         delete typeList;
     }
     | KW_FUNC ID '(' ')' type block_statement{
@@ -142,7 +142,7 @@ function_definition: KW_FUNC ID '(' parameters_list ')' '(' return_type_list ')'
     | KW_FUNC ID '(' ')'  block_statement{
         ParametersList * pm = new ParametersList();
         TypeList * typeList = new TypeList;
-        $$ = new FunctionDefinition($2, *pm, NULLTYPE, *typeList, "nada", $5, yylineno);
+        $$ = new FunctionDefinition($2, *pm, VOID, *typeList, "nada", $5, yylineno);
         delete typeList;
         delete pm;
     }

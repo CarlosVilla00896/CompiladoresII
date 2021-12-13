@@ -15,7 +15,8 @@ func Println(){
 
 func BubbleSort(arr[] int, size int)[]int {
     var array[5] int
-    if(array[4] > 4){
+
+    if(array[5] > array[6+1]){
         
     }
 
@@ -36,8 +37,8 @@ func BubbleSort(arr[] int, size int)[]int {
 func main() {
  
    var size int = 7
-   array:= []int{11, 4, 3, 8, 18, 17, 43}
-   fmt.Println(BubbleSort(array, size))
+   arrays:= []int{11, 4, 3, 8, 18, 17, 43}
+   fmt.Println(BubbleSort(arrays, size))
 }
 
 func main2() {
@@ -72,7 +73,7 @@ func main3() {
     */
     a:= rand.sloat32() * 100
     b:= rand.sloat32() * 100
- 
+    
     fmt.Println("a = ", a)
     fmt.Println("b = ", b)
     fmt.Println("a+b = ", a+b)

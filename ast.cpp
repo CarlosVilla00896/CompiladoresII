@@ -428,6 +428,7 @@ Type PostDecrementExpression::getType(){
 Type ArrayExpression::getType(){
     if(this->expression->getType() != INT){
         cout<<"Error in line "<<this->line<<": Storage size of '"<<this->id->value<<"' must be an int value."<<endl;
+        exit(0);
     }
 
     return this->id->getType();
