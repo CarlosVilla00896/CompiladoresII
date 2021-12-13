@@ -321,8 +321,8 @@ int ForStatement::evaluateSemantic(){
         } 
     }
 
-    if(this->initExpr != NULL){
-        this->initExpr->getType();
+    if(this->postExpr != NULL){
+        this->postExpr->getType();
     }
 
     pushContext();
@@ -539,64 +539,157 @@ Type name##Expression::getType(){\
     return BOOL; \
 }\
 
-Type AssignExpression::getType(){
-    Type value;
+// #define IMPLEMENT_BINARY_ASSIGN_EXPRESSION_GET_TYPE(name)\
+// Type name##Expression::getType(){\
+//     list<Expression *>::iterator leftIt = this->leftExpressionList.begin();\
+//     list<Initializer *>::iterator rightIt = this->rightExpressionList.begin();\
+//     if( leftExpressionList.size() != rightExpressionList.size()){\
+//         cerr<<"Error in line "<<this->line<<": Initializers list must match assignment list."<<endl;\
+//         exit(0);\
+//     }\
+//     int leftExprIndex = 0;\
+//     while( leftIt != this->leftExpressionList.end()){\
+//         Expression * leftExpr = (*leftIt);\
+//         list<Initializer *>::iterator rightIt2 = this->rightExpressionList.begin();\
+//         advance(rightIt2, leftExprIndex);\
+//         Initializer * rightExpr = (*rightIt2);\
 
-    return value;
+//         if(leftExpr->getType() != rightExpr->initializer->getType()){\
+//              cerr<<"Error in line "<<this->line<<". Value of type "<<getTypeName(rightExpr->initializer->getType())<<" cannot be assigned to "<<getTypeName(leftExpr->getType())<<" type."<<endl;\
+//         }\
+//         leftIt++;\
+//         leftExprIndex++;\
+//     }\
+
+//     return BOOL;\
+     
+// }\
+
+void AuxAssignExpre(ExpressionList leftExpressionList, InitializerList rightExpressionList, int line){
+    list<Expression *>::iterator leftIt = leftExpressionList.begin();
+    list<Initializer *>::iterator rightIt = rightExpressionList.begin();
+    if( leftExpressionList.size() != rightExpressionList.size()){
+        cerr<<"Error in line "<<line<<": Initializers list must match assignment list."<<endl;\
+        exit(0);
+    }\
+    int leftExprIndex = 0;
+    while( leftIt != leftExpressionList.end()){
+        Expression * leftExpr = (*leftIt);
+        list<Initializer *>::iterator rightIt2 = rightExpressionList.begin();
+        advance(rightIt2, leftExprIndex);
+        Initializer * rightExpr = (*rightIt2);
+
+        if(leftExpr->getType() != rightExpr->initializer->getType()){
+            cerr<<"Error in line "<<line<<". Value of type "<<getTypeName(rightExpr->initializer->getType())<<" cannot be assigned to "<<getTypeName(leftExpr->getType())<<" type."<<endl;
+            exit(0);
+        }
+        leftIt++;
+        leftExprIndex++;
+    }
+}
+
+Type AssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type PlusAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type MinusAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type MultAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type DivAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type ModAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type PowAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type AndAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 Type OrAssignExpression::getType(){
-    Type value;
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
 
-    return value;
+void InitializerIsArray(Initializer * initializer, IdExpression * declarator, int line){
+    if( initializer->initializer != NULL ){
+        if( initializer->initializer->getType() != INT){
+            cout<<"Error in line "<<line<<": Storage size of '"<<declarator->value<<"' must be an int value."<<endl;
+            exit(0);
+        }
+    }
+
+    list<Expression *>::iterator arrayIt = initializer->arrayValues.begin();
+    while( arrayIt != initializer->arrayValues.end()){
+        Expression * arrayValue = (*arrayIt);
+        if(arrayValue->getType() != initializer->type ){
+            cout<<"Error in line "<<line<<": Value of type "<<getTypeName(arrayValue->getType())<<" cannot be converted to "<<getTypeName(initializer->type)<<" type."<<endl;
+            exit(0);
+        }
+        arrayIt++;
+    }
+}
+
+void AuxShortDeclaration(ExpressionList declaratorsList, InitializerList initializerList, int line){
+    list<Expression *>::iterator declaratorIt = declaratorsList.begin();
+    list<Initializer *>::iterator initializerIt = initializerList.begin();
+
+    if( !initializerList.empty()){
+        if( declaratorsList.size() != initializerList.size()){
+            cout<<"Error in line "<<line<<": Initializers list must match declarators list."<<endl;
+            exit(0);
+        }
+    }
+    int declaratorItIndex = 0;
+    while(declaratorIt != declaratorsList.end()){
+        Expression * expr = (*declaratorIt);
+        IdExpression * declarator = (IdExpression*) expr;
+       if(!variableExists(declarator->value)){
+            list<Initializer *>::iterator initializerIt2 = initializerList.begin();
+            advance(initializerIt2, declaratorItIndex);
+            Initializer * initializer  = (*initializerIt2);
+            if( initializer->isArrayInitializer ){
+                InitializerIsArray(initializer, declarator, line);
+                context->variables[declarator->value] = initializer->type;
+            }else{
+                context->variables[declarator->value] = initializer->initializer->getType();
+            }
+            
+        }else{
+            cout<<"Error in line "<<line<<": Redefinition of variable '"<< declarator->value<< "'."<<endl;
+            exit(0);
+        }
+       
+        declaratorIt++;
+        declaratorItIndex++;
+    }
 }
 
 Type ColonAssignExpression::getType(){
-    Type value;
-
-    return value;
+    AuxShortDeclaration(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
 }
 
 

@@ -132,6 +132,13 @@ function_definition: KW_FUNC ID '(' parameters_list ')' '(' return_type_list ')'
         $$ = new FunctionDefinition($2, *$4, NULLTYPE, *typeList, "nada", $6, yylineno);
         delete typeList;
     }
+    | KW_FUNC ID '(' ')' type block_statement{
+        ParametersList * pm = new ParametersList();
+        TypeList * typeList = new TypeList;
+        $$ = new FunctionDefinition($2, *pm, (Type)$5, *typeList, "nada", $6, yylineno);
+        delete typeList;
+        delete pm;
+    }
     | KW_FUNC ID '(' ')'  block_statement{
         ParametersList * pm = new ParametersList();
         TypeList * typeList = new TypeList;
