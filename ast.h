@@ -1,7 +1,7 @@
 #include <string>
 #include <list>
 #include <map>
-#include "type.h" //Remember to remove this from here when doing code generation
+#include "code.h"
 
 using namespace std;
 
@@ -49,6 +49,7 @@ class Expression {
     public:
         int line;
         virtual Type getType() = 0;
+        virtual void genCode(Code &code) = 0;
 };
 
 class Statement{
@@ -56,6 +57,7 @@ class Statement{
         int line;
         virtual int evaluateSemantic() = 0;
         virtual StatementKind getKind() = 0;
+        virtual string genCode() = 0;
 };
 
 class Initializer{
@@ -117,6 +119,7 @@ class VarDeclaration : public Statement{
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return VAR_DECLARATION_STATEMENT;
         }
@@ -132,9 +135,12 @@ class GlobalDeclaration : public Statement{
         VarDeclaration * declarationStatement;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return GLOBAL_DECLARATION_STATEMENT;
         }
+
+        
 };
 
 class Parameter{
@@ -165,6 +171,7 @@ class BlockStatement : public Statement {
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return BLOCK_STATEMENT;
         }
@@ -190,6 +197,7 @@ class FunctionDefinition : public Statement {
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return FUNCTION_DEFINITION_STATEMENT;
         }
@@ -207,6 +215,7 @@ class IntExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 
@@ -221,6 +230,7 @@ class FloatExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class BoolExpression : public Expression{
@@ -234,6 +244,7 @@ class BoolExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class StringExpression : public Expression{
@@ -246,6 +257,7 @@ class StringExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class IdExpression : public Expression{
@@ -259,6 +271,7 @@ class IdExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class BinaryExpression : public Expression{
@@ -292,6 +305,7 @@ class name##Expression : public BinaryExpression{\
     public: \
         name##Expression(Expression * leftExpression, Expression * rightExpression, int line) : BinaryExpression(leftExpression, rightExpression, line){}\
         Type getType(); \
+        void genCode(Code &code);\
 };
 
 #define IMPLEMENT_BINARY_ASSIGN_EXPRESSION(name) \
@@ -299,6 +313,7 @@ class name##Expression : public BinaryAssignExpression{\
     public: \
         name##Expression(ExpressionList leftExpressionList, InitializerList rightExpressionList, int line) : BinaryAssignExpression(leftExpressionList, rightExpressionList, line){}\
         Type getType(); \
+        void genCode(Code &code);\
 };
 
 class UnaryExpression : public Expression{
@@ -313,6 +328,7 @@ class UnaryExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class PostIncrementExpression: public Expression{
@@ -325,6 +341,7 @@ class PostIncrementExpression: public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class PostDecrementExpression: public Expression{
@@ -337,6 +354,7 @@ class PostDecrementExpression: public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class ArrayExpression : public Expression{
@@ -351,6 +369,7 @@ class ArrayExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class FunctionCallExpression : public Expression{
@@ -365,6 +384,7 @@ class FunctionCallExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 
 };
 
@@ -383,6 +403,7 @@ class FunctionInvocationExpression : public Expression{
         int line;
 
         Type getType();
+        void genCode(Code &code);
 };
 
 class ElseStatement : public Statement{
@@ -402,6 +423,7 @@ class ElseStatement : public Statement{
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return ELSE_STATEMENT;
         }
@@ -422,6 +444,7 @@ class IfStatement : public Statement{
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return IF_STATEMENT;
         }
@@ -444,6 +467,7 @@ class ForStatement : public Statement{
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return FOR_STATEMENT;
         }
@@ -460,6 +484,7 @@ class ReturnStatement : public Statement{
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return RETURN_STATEMENT;
         }
@@ -476,6 +501,7 @@ class JumpStatement : public Statement{
     int line;
 
     int evaluateSemantic();
+    string genCode();
     StatementKind getKind(){
         return JUMP_STATEMENT;
     }
@@ -492,6 +518,7 @@ class ExpressionStatement : public Statement{
         int line;
 
         int evaluateSemantic();
+        string genCode();
         StatementKind getKind(){
             return EXPRESSION_STATEMENT;
         }

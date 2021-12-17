@@ -1,99 +1,12 @@
 package main
- 
+
 import "fmt"
- 
-var c, fmt, rand bool
-
-func sloat32() int {
-
-}
-
-func Println(){
-    ac:= rand.sloat32() * 100
-    bc:= rand.sloat32() * 100
-}
-
-func BubbleSort(arr[] int, size int)[]int {
-    var array[5] int
-
-    if(array[5] > array[6+1]){
-        
-    }
-
-    if(array[9] == array[2]){
-
-    }
-    
-   for i:=0; i < size-1; i++ {
-      for j:=0; j < size-i-1; j++ {
-         if (array[j] > array[j+1]) {
-            array[j], array[j+1] = array[j+1], array[j]
-         }
-      }
-   }
-   return array
-}
+import "math/rand"
 
 func main() {
- 
-   var size int = 7
-   arrays:= []int{11, 4, 3, 8, 18, 17, 43}
-   fmt.Println(BubbleSort(arrays, size))
-}
 
-func main2() {
-    var loco int
-    i := 1
-    for i <= 3 {
-        fmt.Println(i)
-        i = i + 1
-    }
- 
-    for j := 3 ; j <= 9; j++ {
-        fmt.Println(j)
-    }
- 
-    for {
-        fmt.Println("loop")
-        break
-    }
- 
-    for n := 0; n <= 5; n++ {
-        if n%2 == 0 {
-            continue
-        }
-        fmt.Println(n)
-    }
-}
+    for 4 < 3 {
 
-func main3() {
-    var n bool
-    /*
-    Operadores básicos
-    */
-    a:= rand.sloat32() * 100
-    b:= rand.sloat32() * 100
-    
-    fmt.Println("a = ", a)
-    fmt.Println("b = ", b)
-    fmt.Println("a+b = ", a+b)
-    fmt.Println("a-b = ", a-b)
-    fmt.Println("a*b = ", a*b)  
-    fmt.Println("a/b = ", a/b)
-    //fmt.Println("a%b = ", a%b)
-    fmt.Println("a>b = ", a>b)
-    fmt.Println("a<b = ", a<b)
-    fmt.Println("a>=b = ", a>=b)
-    fmt.Println("a<=b = ", a<=b)
-    fmt.Println("true&&true = ", true && n)
- 
-}
+    }
 
-func AssignTest(){
-    var cola int = 5
-    var loca float32 6
-    var mola bool = true
-
-    cola += 4
-    loca /= 5.3
 }

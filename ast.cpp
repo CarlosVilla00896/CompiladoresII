@@ -2,20 +2,136 @@
 #include <iostream>
 #include <sstream>
 #include <set>
+#include "asm.h"
+
+int globalStackPointer = 0;
+extern Asm assemblyFile;
 
 class VariableInfo{
     public:
-        VariableInfo(bool isArray, bool isParameter, Type type){
+        VariableInfo(int offset, bool isArray, bool isParameter, Type type){
+            this->offset = offset;
             this->isArray = isArray;
             this->isParameter = isParameter;
             this->type = type;
         }
+        int offset;
         bool isArray;
         bool isParameter;
         Type type;
 };
 
-// map<string, VariableInfo *> codeGenerationVars;
+map<string, VariableInfo *> codeGenerationVars;
+
+const char * intTemps[] = {"$t0","$t1", "$t2","$t3","$t4","$t5","$t6","$t7","$t8","$t9" };
+const char * floatTemps[] = {"$f0",
+                            "$f1",
+                            "$f2",
+                            "$f3",
+                            "$f4",
+                            "$f5",
+                            "$f6",
+                            "$f7",
+                            "$f8",
+                            "$f9",
+                            "$f10",
+                            "$f11",
+                            "$f12",
+                            "$f13",
+                            "$f14",
+                            "$f15",
+                            "$f16",
+                            "$f17",
+                            "$f18",
+                            "$f19",
+                            "$f20",
+                            "$f21",
+                            "$f22",
+                            "$f23",
+                            "$f24",
+                            "$f25",
+                            "$f26",
+                            "$f27",
+                            "$f28",
+                            "$f29",
+                            "$f30",
+                            "$f31"
+                        };
+
+#define INT_TEMP_COUNT 10
+#define FLOAT_TEMP_COUNT 32
+set<string> intTempMap;
+set<string> floatTempMap;
+
+
+string getIntTemp(){
+    for (int i = 0; i < INT_TEMP_COUNT; i++)
+    {
+        if(intTempMap.find(intTemps[i]) == intTempMap.end()){
+            intTempMap.insert(intTemps[i]);
+            return string(intTemps[i]);
+        }
+    }
+    cout<<"No more int registers!"<<endl;
+    //exit(1);
+    return "";
+}
+
+string getFloatTemp(){
+    for (int i = 0; i < FLOAT_TEMP_COUNT; i++)
+    {
+        if(floatTempMap.find(floatTemps[i]) == floatTempMap.end()){
+            floatTempMap.insert(floatTemps[i]);
+            return string(floatTemps[i]);
+        }
+    }
+    cout<<"No more float registers!"<<endl;
+    //exit(1);
+    return "";
+}
+
+void releaseIntTemp(string temp){
+    intTempMap.erase(temp);
+}
+
+void releaseFloatTemp(string temp){
+    floatTempMap.erase(temp);
+}
+
+void releaseRegister(string temp){
+    releaseIntTemp(temp);
+    releaseFloatTemp(temp);
+}
+
+int labelCounter = 0;
+
+string getNewLabel(string prefix){
+    stringstream ss;
+    ss<<prefix << labelCounter;
+    labelCounter++;
+    return ss.str();
+}
+
+string saveState(){
+    set<string>::iterator it = floatTempMap.begin();
+    stringstream ss;
+    ss<<"sw $ra, " <<globalStackPointer<< "($sp)\n";
+    globalStackPointer+=4;
+    return ss.str();
+}
+
+string retrieveState(string state){
+    std::string::size_type n = 0;
+    string s = "sw";
+    while ( ( n = state.find( s, n ) ) != std::string::npos )
+    {
+    state.replace( n, s.size(), "lw" );
+    n += 2;
+    globalStackPointer-=4;
+    }
+    return state;
+}
+
 
 class ContextStack{
     public:
@@ -40,7 +156,17 @@ map<string, Type> resultTypes ={
     {"FLOAT32,FLOAT32", FLOAT32},
     {"INT,FLOAT32", FLOAT32},
     {"FLOAT32,INT", FLOAT32},
-    {"BOOL,BOOL", BOOL},
+    {"INT_ARRAY,INT_ARRAY", INT},
+    {"FLOAT_ARRAY,FLOAT_ARRAY", FLOAT32},
+    {"FLOAT_ARRAY,INT_ARRAY", FLOAT32},
+    {"INT_ARRAY,FLOAT_ARRAY", FLOAT32},
+    {"INT_ARRAY,INT", INT},
+    {"INT_ARRAY,FLOAT32", FLOAT32},
+    {"INT,FLOAT_ARRAY", FLOAT32},
+    {"INT,INT_ARRAY", INT},
+    {"FLOAT_ARRAY,FLOAT32", FLOAT32},
+    {"FLOAT32,FLOAT_ARRAY",FLOAT32},
+    {"FLOAT32,INT_ARRAY", FLOAT32}
 };
 
 map<string, Type> booleanResultTypes ={
@@ -50,8 +176,6 @@ map<string, Type> booleanResultTypes ={
     {"FLOAT32,INT", BOOL},
     {"BOOL,BOOL", BOOL},
 };
-
-
 
 
 string getTypeName(Type type){
@@ -200,10 +324,20 @@ int VarDeclaration::evaluateSemantic(){
     return 1;
 }
 
+string VarDeclaration::genCode(){
+
+    return "";
+}
+
 int GlobalDeclaration::evaluateSemantic(){
     VarDeclaration * varDeclaration = this->declarationStatement;
     AuxVarDeclaration(varDeclaration->declaratorsList, varDeclaration->initializerList, varDeclaration->type, varDeclaration->line, true);
     return 2;
+}
+
+string GlobalDeclaration::genCode(){
+
+    return "";
 }
 
 int BlockStatement::evaluateSemantic(){
@@ -218,6 +352,11 @@ int BlockStatement::evaluateSemantic(){
         itd++;
     }
     return 3;
+}
+
+string BlockStatement::genCode(){
+
+    return "";
 }
 
 int Parameter::evaluateSemantic(){
@@ -275,6 +414,41 @@ int FunctionDefinition::evaluateSemantic(){
     
 }
 
+string FunctionDefinition::genCode(){
+
+    if(this->statement == NULL)
+        return "";
+
+    int stackPointer = 4;
+    globalStackPointer = 0;
+    stringstream code;
+    code << this->id<<": "<<endl;
+    string state = saveState();
+    code <<state<<endl;
+    if(this->params.size() > 0){
+        list<Parameter *>::iterator it = this->params.begin();
+        for(int i = 0; i< this->params.size(); i++){
+            code << "sw $a"<<i<<", "<< stackPointer<<"($sp)"<<endl;
+            codeGenerationVars[(*it)->id] = new VariableInfo(stackPointer, false, true, (*it)->type);
+            stackPointer +=4;
+            globalStackPointer +=4;
+            it++;
+        }
+    }
+
+    code<< this->statement->genCode()<<endl;
+    stringstream sp;
+    int currentStackPointer = globalStackPointer;
+    sp << endl<<"addiu $sp, $sp, -"<<currentStackPointer<<endl;
+    code << retrieveState(state);
+    code << "addiu $sp, $sp, "<<currentStackPointer<<endl;
+    code <<"jr $ra"<<endl;
+    codeGenerationVars.clear();
+    string result = code.str();
+    result.insert(id.size() + 2, sp.str());
+    return result;
+}
+
 int IfStatement::evaluateSemantic(){
     
     if( this->initExpression != NULL ){
@@ -288,6 +462,11 @@ int IfStatement::evaluateSemantic(){
     this->trueStatement->evaluateSemantic();
     popContext();
     return 0;
+}
+
+string IfStatement::genCode(){
+
+    return "";
 }
 
 int ElseStatement::evaluateSemantic(){
@@ -307,6 +486,11 @@ int ElseStatement::evaluateSemantic(){
     popContext();
 
     return 0;
+}
+
+string ElseStatement::genCode(){
+
+    return "";
 }
 
 int ForStatement::evaluateSemantic(){
@@ -333,6 +517,45 @@ int ForStatement::evaluateSemantic(){
     return 0;
 }
 
+
+string ForStatement::genCode(){
+    Code initExprCode;
+    Code conditionalExprCode;
+    string forLabel = getNewLabel("for");
+    string endForLabel = getNewLabel("endFor");
+    stringstream ss;
+
+    ss<<forLabel<<": "<<endl;
+
+    if(this->initExpr != NULL){
+        this->initExpr->genCode(initExprCode);
+        ss<<initExprCode.code<<endl;
+    }
+    
+    if(this->conditionalExpr != NULL){
+        this->conditionalExpr->genCode(conditionalExprCode);
+        ss<<conditionalExprCode.code<<endl;
+
+        if(conditionalExprCode.type == INT){
+            ss<<"beqz "<<conditionalExprCode.place<<", "<<endForLabel<<endl;
+        }else if(conditionalExprCode.type == FLOAT32){
+            ss<<"bc1f "<<endForLabel<<endl;
+        }
+        
+
+    }
+
+    if( this->postExpr != NULL){
+
+    }
+
+    ss<<this->statement->genCode()<<endl
+    <<"j "<< forLabel<<endl
+    <<endForLabel<<": "<<endl;
+   
+    return ss.str();
+}
+
 int ReturnStatement::evaluateSemantic(){
     list<Expression *>::iterator iterator = this->expressionList.begin();
 
@@ -343,29 +566,81 @@ int ReturnStatement::evaluateSemantic(){
     return 0;
 }
 
+string ReturnStatement::genCode(){
+
+    return "";
+}
+
 int JumpStatement::evaluateSemantic(){
     //nada
     return 0;
+}
+
+string JumpStatement::genCode(){
+
+    return "";
 }
 
 int ExpressionStatement::evaluateSemantic(){
     return this->expression->getType();
 }
 
+string ExpressionStatement::genCode(){
+
+    return "";
+}
+
 Type IntExpression::getType(){
     return INT;
+}
+
+void IntExpression::genCode(Code &code){
+    stringstream ss;
+    string intTemp = getIntTemp();
+    ss << "li.s " << intTemp << ", "<< this->value <<endl;
+    code.place = intTemp;
+    code.type = INT;
+    code.code = ss.str();
 }
 
 Type FloatExpression::getType(){
     return FLOAT32;
 }
 
+void FloatExpression::genCode(Code &code){
+    stringstream ss;
+    string floatTemp = getFloatTemp();
+    ss << "li.s " << floatTemp << ", "<< this->value <<endl;
+    code.place = floatTemp;
+    code.type = FLOAT32;
+    code.code = ss.str();
+}
+
 Type BoolExpression::getType(){
     return BOOL;
 }
 
+void BoolExpression::genCode(Code &code){
+    stringstream ss;
+    string intTemp = getIntTemp();
+    ss << "li " << intTemp << ", "<< this->value <<endl;
+    code.place = intTemp;
+    code.type = BOOL;
+    code.code = ss.str();
+}
+
 Type StringExpression::getType(){
     return STRING;
+}
+
+void StringExpression::genCode(Code &code){
+    string strLabel = getNewLabel("string");
+    stringstream ss;
+    ss << strLabel <<": .asciiz" << this->value << ""<<endl;
+    assemblyFile.data += ss.str(); 
+    code.code = "";
+    code.place = strLabel;
+    code.type = STRING;
 }
 
 Type IdExpression::getType(){
@@ -384,6 +659,43 @@ Type IdExpression::getType(){
     }
     return INVALID;
 }
+
+void IdExpression::genCode(Code &code){
+    code.type = globalVariables[this->value];
+    if(codeGenerationVars.find(this->value) == codeGenerationVars.end()){
+        if(globalVariables[this->value] == INT_ARRAY || globalVariables[this->value] == FLOAT_ARRAY){
+            string intTemp = getIntTemp();
+            code.code = "la " + intTemp+ ", "+ this->value + "\n";
+            code.place = intTemp;
+        }
+        if(globalVariables[this->value] == FLOAT32){
+            string floatTemp = getFloatTemp();
+            code.place = floatTemp;
+            code.code = "l.s "+ floatTemp + ", "+ this->value + "\n";
+        }else{
+            string intTemp = getIntTemp();
+            code.place = intTemp;
+            code.code = "lw "+ intTemp + ", "+ this->value + "\n";
+        }
+    }
+   else{
+        code.type = codeGenerationVars[this->value]->type;
+        if(codeGenerationVars[this->value]->type == FLOAT32 && !codeGenerationVars[this->value]->isArray){
+            string floatTemp = getFloatTemp();
+            code.place = floatTemp;
+            code.code = "l.s "+ floatTemp + ", " +to_string(codeGenerationVars[this->value]->offset) +"($sp)\n";
+        }else if(codeGenerationVars[this->value]->type == INT && !codeGenerationVars[this->value]->isArray){
+            string intTemp = getIntTemp();
+            code.place = intTemp;
+            code.code = "lw "+ intTemp + ", " + to_string(codeGenerationVars[this->value]->offset) +"($sp)\n";
+        }else if(codeGenerationVars[this->value]->isArray){
+            string intTemp = getIntTemp();
+            code.code = "la "+ intTemp + ", " + to_string(codeGenerationVars[this->value]->offset)+"($sp)\n";
+            code.place = intTemp;
+        }
+    }
+}
+
 Type getUnaryType(Type expressionType, int unaryOperation, int line){
     switch(unaryOperation){
         case INCREMENT:
@@ -405,6 +717,11 @@ Type UnaryExpression::getType(){
     return getUnaryType(expressionType, this->type, this->line);
 }
 
+void UnaryExpression::genCode(Code &code){
+
+    
+}
+
 Type PostIncrementExpression::getType(){
     
     if(this->expression->getType() != INT && this->expression->getType() != FLOAT32){
@@ -413,6 +730,11 @@ Type PostIncrementExpression::getType(){
     }
 
     return this->expression->getType();
+}
+
+void PostIncrementExpression::genCode(Code &code){
+
+    
 }
 
 Type PostDecrementExpression::getType(){
@@ -425,13 +747,22 @@ Type PostDecrementExpression::getType(){
     return this->expression->getType();
 }
 
+void PostDecrementExpression::genCode(Code &code){
+
+    
+}
+
 Type ArrayExpression::getType(){
     if(this->expression->getType() != INT){
         cout<<"Error in line "<<this->line<<": Storage size of '"<<this->id->value<<"' must be an int value."<<endl;
         exit(0);
     }
-
     return this->id->getType();
+}
+
+void ArrayExpression::genCode(Code &code){
+
+    
 }
 
 Type FunctionCallExpression::getType(){
@@ -467,6 +798,11 @@ Type FunctionCallExpression::getType(){
     }
 
     return funcType;
+}
+
+void FunctionCallExpression::genCode(Code &code){
+
+    
 }
 
 Type FunctionInvocationExpression::getType(){
@@ -516,6 +852,11 @@ Type FunctionInvocationExpression::getType(){
     return funcType;
 }
 
+void FunctionInvocationExpression::genCode(Code &code){
+
+    
+}
+
 #define IMPLEMENT_BINARY_GET_TYPE(name)\
 Type name##Expression::getType(){\
     string leftType = getTypeName(this->leftExpression->getType());\
@@ -526,6 +867,32 @@ Type name##Expression::getType(){\
         exit(0);\
     }\
     return resultType; \
+}\
+
+void toFloat(Code &code){
+    if(code.type == INT){
+        string floatTemp = getFloatTemp();
+        stringstream ss;
+        ss << code.code
+        << "mtc1 "<< code.place << ", " << floatTemp <<endl
+        << "cvt.s.w " << floatTemp<< ", " << floatTemp <<endl;
+        releaseRegister(code.place);
+        code.place = floatTemp;
+        code.type = FLOAT32;
+        code.code =  ss.str();
+    }
+    else{
+        /* nothing */
+    }
+}
+
+
+#define IMPLEMENT_BINARY_ARIT_GEN_CODE(name, op)\
+void name##Expression::genCode(Code &code){\
+    Code leftCode, rightCode;\
+    stringstream ss;\
+    this->leftExpression->genCode(leftCode);\
+    this->rightExpression->genCode(rightCode);\
 }\
 
 #define IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(name)\
@@ -540,31 +907,53 @@ Type name##Expression::getType(){\
     return BOOL; \
 }\
 
-// #define IMPLEMENT_BINARY_ASSIGN_EXPRESSION_GET_TYPE(name)\
-// Type name##Expression::getType(){\
-//     list<Expression *>::iterator leftIt = this->leftExpressionList.begin();\
-//     list<Initializer *>::iterator rightIt = this->rightExpressionList.begin();\
-//     if( leftExpressionList.size() != rightExpressionList.size()){\
-//         cerr<<"Error in line "<<this->line<<": Initializers list must match assignment list."<<endl;\
-//         exit(0);\
-//     }\
-//     int leftExprIndex = 0;\
-//     while( leftIt != this->leftExpressionList.end()){\
-//         Expression * leftExpr = (*leftIt);\
-//         list<Initializer *>::iterator rightIt2 = this->rightExpressionList.begin();\
-//         advance(rightIt2, leftExprIndex);\
-//         Initializer * rightExpr = (*rightIt2);\
+string intArithmetic(Code &leftCode, Code &rightCode, Code &code, char op){
+    stringstream ss;
+    code.place = getIntTemp();
+    switch (op)
+    {
+        case '+':
+            ss << "add "<< code.place<<", "<< leftCode.place <<", "<< rightCode.place;
+            break;
+        case '-':
+            ss << "sub "<< code.place<<", "<< leftCode.place <<", "<< rightCode.place;
+            break;
+        case '*':
+            ss << "mult "<< leftCode.place <<", "<< rightCode.place <<endl
+            << "mflo "<< code.place;
+            break;
+        case '/':
+            ss << "div "<< leftCode.place <<", "<< rightCode.place<<endl
+            << "mflo "<< code.place;
+            break;
+        default:
+            break;
+    }
+    return ss.str();
+}
 
-//         if(leftExpr->getType() != rightExpr->initializer->getType()){\
-//              cerr<<"Error in line "<<this->line<<". Value of type "<<getTypeName(rightExpr->initializer->getType())<<" cannot be assigned to "<<getTypeName(leftExpr->getType())<<" type."<<endl;\
-//         }\
-//         leftIt++;\
-//         leftExprIndex++;\
-//     }\
-
-//     return BOOL;\
-     
-// }\
+string floatArithmetic(Code &leftCode, Code &rightCode, Code &code, char op){
+    stringstream ss;
+    code.place = getFloatTemp();
+    switch (op)
+    {
+        case '+':
+            ss << "add.s "<< code.place<<", "<< leftCode.place <<", "<< rightCode.place;
+            break;
+        case '-':
+            ss << "sub.s "<< code.place<<", "<< leftCode.place <<", "<< rightCode.place;
+            break;
+        case '*':
+            ss << "mul.s "<< code.place<<", "<< leftCode.place <<", "<< rightCode.place;
+            break;
+        case '/':
+            ss << "div.s "<< code.place<<", "<< leftCode.place <<", "<< rightCode.place;
+            break;
+        default:
+            break;
+    }
+    return ss.str();
+}
 
 void AuxAssignExpre(ExpressionList leftExpressionList, InitializerList rightExpressionList, int line){
     list<Expression *>::iterator leftIt = leftExpressionList.begin();
@@ -572,7 +961,7 @@ void AuxAssignExpre(ExpressionList leftExpressionList, InitializerList rightExpr
     if( leftExpressionList.size() != rightExpressionList.size()){
         cerr<<"Error in line "<<line<<": Initializers list must match assignment list."<<endl;\
         exit(0);
-    }\
+    }
     int leftExprIndex = 0;
     while( leftIt != leftExpressionList.end()){
         Expression * leftExpr = (*leftIt);
@@ -594,9 +983,17 @@ Type AssignExpression::getType(){
     return BOOL;
 }
 
+void AssignExpression::genCode(Code &code){
+
+}
+
 Type PlusAssignExpression::getType(){
     AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
     return BOOL;
+}
+
+void PlusAssignExpression::genCode(Code &code){
+
 }
 
 Type MinusAssignExpression::getType(){
@@ -604,9 +1001,17 @@ Type MinusAssignExpression::getType(){
     return BOOL;
 }
 
+void MinusAssignExpression::genCode(Code &code){
+
+}
+
 Type MultAssignExpression::getType(){
     AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
     return BOOL;
+}
+
+void MultAssignExpression::genCode(Code &code){
+
 }
 
 Type DivAssignExpression::getType(){
@@ -614,9 +1019,17 @@ Type DivAssignExpression::getType(){
     return BOOL;
 }
 
+void DivAssignExpression::genCode(Code &code){
+
+}
+
 Type ModAssignExpression::getType(){
     AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
     return BOOL;
+}
+
+void ModAssignExpression::genCode(Code &code){
+
 }
 
 Type PowAssignExpression::getType(){
@@ -624,14 +1037,26 @@ Type PowAssignExpression::getType(){
     return BOOL;
 }
 
+void PowAssignExpression::genCode(Code &code){
+
+}
+
 Type AndAssignExpression::getType(){
     AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
     return BOOL;
 }
 
+void AndAssignExpression::genCode(Code &code){
+
+}
+
 Type OrAssignExpression::getType(){
     AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
     return BOOL;
+}
+
+void OrAssignExpression::genCode(Code &code){
+
 }
 
 void InitializerIsArray(Initializer * initializer, IdExpression * declarator, int line){
@@ -693,6 +1118,41 @@ Type ColonAssignExpression::getType(){
     return BOOL;
 }
 
+void ColonAssignExpression::genCode(Code &code){
+
+}
+
+void EqualExpression::genCode(Code &code){
+
+}
+
+void NotEqualExpression::genCode(Code &code){
+
+}
+
+void GteExpression::genCode(Code &code){
+
+}
+
+void LteExpression::genCode(Code &code){
+
+}
+
+void GtExpression::genCode(Code &code){
+
+}
+
+void LtExpression::genCode(Code &code){
+
+}
+
+void LogicalAndExpression::genCode(Code &code){
+
+}
+
+void LogicalOrExpression::genCode(Code &code){
+
+}
 
 IMPLEMENT_BINARY_GET_TYPE(Add);
 IMPLEMENT_BINARY_GET_TYPE(Sub);
@@ -700,6 +1160,13 @@ IMPLEMENT_BINARY_GET_TYPE(Mult);
 IMPLEMENT_BINARY_GET_TYPE(Div);
 IMPLEMENT_BINARY_GET_TYPE(Mod);
 IMPLEMENT_BINARY_GET_TYPE(Pow);
+
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Add, '+');
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Sub, '-');
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Mult, '*');
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Div, '/');
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Mod, '/');
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Pow, '/');
 
 IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(Equal);
 IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(NotEqual);

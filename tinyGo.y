@@ -5,6 +5,10 @@
 %{
 //https://golang.org/ref/spec
     #include <cstdio>
+    #include "asm.h"
+    #include <fstream>
+    #include <iostream>
+
     using namespace std;
     int yylex();
     extern int yylineno;
@@ -26,6 +30,17 @@
     #define COLONEQUAL 10
     #define KWBREAK 11
     #define KWCONTINUE 12
+
+    Asm assemblyFile;
+
+    void writeFile(string name){
+        ofstream file;
+        file.open(name);
+        file << assemblyFile.data << endl
+        << assemblyFile.global <<endl
+        << assemblyFile.text << endl;
+        file.close();
+    }
     
 %}
 
@@ -90,12 +105,20 @@
 
 %%
 
-start: package_declaration { 
+start: package_declaration {
+    assemblyFile.global = ".globl main";
+    assemblyFile.data = ".data\n";
+    assemblyFile.text = ".text\n";
+    string code;
     list<Statement *>::iterator it = $1->begin();
     while(it != $1->end()){
         printf("semantic result: %d \n",(*it)->evaluateSemantic());
+        code += (*it)->genCode();
         it++;
     }
+
+    assemblyFile.text += code;
+    writeFile("result.s");
 }
     ;
 
