@@ -886,27 +886,6 @@ void toFloat(Code &code){
     }
 }
 
-
-#define IMPLEMENT_BINARY_ARIT_GEN_CODE(name, op)\
-void name##Expression::genCode(Code &code){\
-    Code leftCode, rightCode;\
-    stringstream ss;\
-    this->leftExpression->genCode(leftCode);\
-    this->rightExpression->genCode(rightCode);\
-}\
-
-#define IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(name)\
-Type name##Expression::getType(){\
-    string leftType = getTypeName(this->leftExpression->getType());\
-    string rightType = getTypeName(this->rightExpression->getType());\
-    Type resultType = booleanResultTypes[leftType+","+rightType];\
-    if(resultType == 0){\
-        cerr<< "Error in line "<<this->line<<": Cannot perform boolean operation between type "<< leftType <<" and type "<< rightType <<endl;\
-        exit(0);\
-    }\
-    return BOOL; \
-}\
-
 string intArithmetic(Code &leftCode, Code &rightCode, Code &code, char op){
     stringstream ss;
     code.place = getIntTemp();
@@ -954,6 +933,45 @@ string floatArithmetic(Code &leftCode, Code &rightCode, Code &code, char op){
     }
     return ss.str();
 }
+
+#define IMPLEMENT_BINARY_ARIT_GEN_CODE(name, op)\
+void name##Expression::genCode(Code &code){\
+    Code leftCode, rightCode;\
+    stringstream ss;\
+    this->leftExpression->genCode(leftCode);\
+    this->rightExpression->genCode(rightCode);\
+    if(leftCode.type == INT && rightCode.type == INT){\
+        code.type = INT;\
+        releaseRegister(leftCode.place);\
+        releaseRegister(rightCode.place);\
+        ss<< leftCode.code << endl\
+        << rightCode.code <<endl\
+        << intArithmetic(leftCode, rightCode, code, op)<< endl;\
+    }else{\
+        code.type = FLOAT32;\
+        toFloat(leftCode);\
+        toFloat(rightCode);\
+        releaseRegister(leftCode.place);\
+        releaseRegister(rightCode.place);\
+        ss << leftCode.code << endl\
+        << rightCode.code <<endl\
+        << floatArithmetic(leftCode, rightCode, code, op)<<endl;\
+    }\
+    code.code = ss.str();\
+}\
+
+#define IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(name)\
+Type name##Expression::getType(){\
+    string leftType = getTypeName(this->leftExpression->getType());\
+    string rightType = getTypeName(this->rightExpression->getType());\
+    Type resultType = booleanResultTypes[leftType+","+rightType];\
+    if(resultType == 0){\
+        cerr<< "Error in line "<<this->line<<": Cannot perform boolean operation between type "<< leftType <<" and type "<< rightType <<endl;\
+        exit(0);\
+    }\
+    return BOOL; \
+}\
+
 
 void AuxAssignExpre(ExpressionList leftExpressionList, InitializerList rightExpressionList, int line){
     list<Expression *>::iterator leftIt = leftExpressionList.begin();
@@ -1153,6 +1171,7 @@ void LogicalAndExpression::genCode(Code &code){
 void LogicalOrExpression::genCode(Code &code){
 
 }
+
 
 IMPLEMENT_BINARY_GET_TYPE(Add);
 IMPLEMENT_BINARY_GET_TYPE(Sub);
