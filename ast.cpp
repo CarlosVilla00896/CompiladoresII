@@ -623,7 +623,11 @@ Type BoolExpression::getType(){
 void BoolExpression::genCode(Code &code){
     stringstream ss;
     string intTemp = getIntTemp();
-    ss << "li " << intTemp << ", "<< this->value <<endl;
+    if(this->value){
+        ss<< "addi "<<intTemp<< ", $zero, 1"<<endl;
+    }else{
+        ss << "move " << intTemp << ", $zero"<<endl;
+    }
     code.place = intTemp;
     code.type = BOOL;
     code.code = ss.str();
@@ -905,6 +909,10 @@ string intArithmetic(Code &leftCode, Code &rightCode, Code &code, char op){
             ss << "div "<< leftCode.place <<", "<< rightCode.place<<endl
             << "mflo "<< code.place;
             break;
+        case '%':
+            ss << "div "<< leftCode.place <<", "<< rightCode.place<<endl
+            << "mfhi "<< code.place;
+            break;
         default:
             break;
     }
@@ -973,6 +981,245 @@ Type name##Expression::getType(){\
 }\
 
 
+void EqualExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    stringstream ss;
+    if (leftSideCode.type == INT && rightSideCode.type == INT)
+    {
+        code.type = INT;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        ss<< leftSideCode.code <<endl
+        << rightSideCode.code <<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        string temp = getIntTemp();
+        string label = getNewLabel("label");
+        string finalLabel = getNewLabel("finalLabel");
+        ss << "beq " << leftSideCode.place << ", " << rightSideCode.place << ", " << label + "\n";
+        ss << "addi " << temp << ", $zero, 0"<<endl << " j " << finalLabel <<endl;
+        ss<< label <<":"<<endl<< "addi " << temp << ", $zero, 1"<<endl<<finalLabel<<":"<<endl;
+        code.place = temp;
+    }else{
+        code.type = FLOAT32;
+        toFloat(leftSideCode);
+        toFloat(rightSideCode);
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        ss << leftSideCode.code << endl
+        << rightSideCode.code <<endl
+        << "c.eq.s "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+    }
+    code.code = ss.str();
+}
+
+void NotEqualExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    stringstream ss;
+    if (leftSideCode.type == INT && rightSideCode.type == INT)
+    {
+        code.type = INT;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        ss<< leftSideCode.code <<endl
+        << rightSideCode.code <<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        string temp = getIntTemp();
+        string label = getNewLabel("label");
+        string finalLabel = getNewLabel("finalLabel");
+        ss << "bne " << leftSideCode.place << ", " << rightSideCode.place << ", " << label + "\n";
+        ss << "addi " << temp << ", $zero, 1"<<endl 
+        << " j " << finalLabel <<endl;
+        ss<< label <<":"<<endl
+        << "addi " << temp << ", $zero, 0"<<endl
+        <<finalLabel<<":"<<endl;
+        code.place = temp;
+    }else{
+        code.type = FLOAT32;
+        toFloat(leftSideCode);
+        toFloat(rightSideCode);
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        ss << leftSideCode.code << endl
+        << rightSideCode.code <<endl
+        << "c.eq.s "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+    }
+    code.code = ss.str();
+}
+
+void GteExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    stringstream ss;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    if (leftSideCode.type == INT && rightSideCode.type == INT)
+    {
+        code.type = INT;
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        string temp = getIntTemp();
+        ss<< "sge "<< temp<< ", "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+        code.place = temp;
+    }else{
+        code.type = FLOAT32;
+        toFloat(leftSideCode);
+        toFloat(rightSideCode);
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        string isGteLabel = getNewLabel("isGteLabel");
+        string isNotGteLabel = getNewLabel("isGteLabel");
+        string finalGteLabel = getNewLabel("finalGteLabel");
+        string temp = getIntTemp();
+        ss << "c.eq.s " << leftSideCode.place << ", "<<rightSideCode.place<<endl
+        <<"bc1t " <<isGteLabel<<endl
+        <<"c.lt.s " <<rightSideCode.place<<", "<<leftSideCode.place<<endl
+        <<"bc1t " << isNotGteLabel <<endl
+        <<isGteLabel <<": "
+        <<"addi "<<temp<<", "<<"$zero, 1"<<endl
+        <<"j "<<finalGteLabel<<endl
+        <<isNotGteLabel<<": "<<endl
+        <<"move"<<temp<<", "<<"$zero"<<endl
+        <<finalGteLabel<<": "<<endl;
+        code.code = temp;
+    }
+    code.code = ss.str();
+}
+
+void LteExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    stringstream ss;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    if (leftSideCode.type == INT && rightSideCode.type == INT)
+    {
+        code.type = INT;
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        string temp = getIntTemp();
+        ss<< "sle "<< temp<< ", "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+        code.place = temp;
+    }else{
+        code.type = FLOAT32;
+        toFloat(leftSideCode);
+        toFloat(rightSideCode);
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        ss<< "c.le.s "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+    }
+    code.code = ss.str();
+}
+
+void GtExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    stringstream ss;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    if (leftSideCode.type == INT && rightSideCode.type == INT)
+    {
+        code.type = INT;
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        string temp = getIntTemp();
+        ss<< "slt "<< temp<< ", "<< rightSideCode.place<< ", "<< leftSideCode.place<<endl;
+        code.place = temp;
+    }else{
+        code.type = FLOAT32;
+        toFloat(leftSideCode);
+        toFloat(rightSideCode);
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        ss<< "c.lt.s "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+    }
+    code.code = ss.str();
+}
+
+void LtExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    stringstream ss;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    if (leftSideCode.type == INT && rightSideCode.type == INT)
+    {
+        code.type = INT;
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        string temp = getIntTemp();
+        ss<< "slt "<< temp<< ", "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+        code.place = temp;
+    }else{
+        code.type = FLOAT32;
+        toFloat(leftSideCode);
+        toFloat(rightSideCode);
+        ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
+        releaseRegister(leftSideCode.place);
+        releaseRegister(rightSideCode.place);
+        ss<< "c.lt.s "<< leftSideCode.place<< ", "<< rightSideCode.place<<endl;
+    }
+    code.code = ss.str();
+}
+
+void LogicalAndExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    stringstream ss;
+    ss<< leftSideCode.code<<endl << rightSideCode.code <<endl;
+    releaseRegister(leftSideCode.place);
+    releaseRegister(rightSideCode.place);
+    string temp = getIntTemp();
+    string label = getNewLabel("label");
+    string finalLabel = getNewLabel("finalLabel");
+    ss<< "addi "<<temp<< ", $zero, 0"<<endl;
+    ss<< "beq "<< leftSideCode.place<< ", "<<temp<<", "<< finalLabel<<endl;
+    ss<< "beq "<< rightSideCode.place<< ", "<<temp<<", "<< finalLabel<<endl;
+    ss<< label<< ":"<<endl
+    << "addi "<< temp<< ", $zero, 1"<<endl
+    <<finalLabel<<":"<<endl;
+    code.place = temp;
+    code.code = ss.str();
+}
+
+void LogicalOrExpression::genCode(Code &code){
+    Code leftSideCode; 
+    Code rightSideCode;
+    this->leftExpression->genCode(leftSideCode);
+    this->rightExpression->genCode(rightSideCode);
+    stringstream ss;
+    ss<< leftSideCode.code<<endl<< rightSideCode.code<<endl;
+    releaseRegister(leftSideCode.place);
+    releaseRegister(rightSideCode.place);
+    string temp = getIntTemp();
+    string label = getNewLabel("label");
+    string finalLabel = getNewLabel("finalLabel");
+    ss<< "addi "<<temp<< ", $zero, 1"<<endl;
+    ss<< "beq "<< leftSideCode.place<< ", "<<temp <<", " << finalLabel <<endl;
+    ss<< "beq "<<rightSideCode.place<< ", "<<temp <<", " << finalLabel <<endl;
+    ss<< label <<":"<<endl
+    << "addi "<< temp<< ", $zero, 0"<<endl
+    <<finalLabel<<":"<<endl;
+    code.place = temp;
+    code.code = ss.str();
+}
+
 void AuxAssignExpre(ExpressionList leftExpressionList, InitializerList rightExpressionList, int line){
     list<Expression *>::iterator leftIt = leftExpressionList.begin();
     list<Initializer *>::iterator rightIt = rightExpressionList.begin();
@@ -996,7 +1243,48 @@ void AuxAssignExpre(ExpressionList leftExpressionList, InitializerList rightExpr
     }
 }
 
+
 Type AssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type PlusAssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type MinusAssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type MultAssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type DivAssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type ModAssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type PowAssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type AndAssignExpression::getType(){
+    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
+    return BOOL;
+}
+
+Type OrAssignExpression::getType(){
     AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
     return BOOL;
 }
@@ -1005,72 +1293,32 @@ void AssignExpression::genCode(Code &code){
 
 }
 
-Type PlusAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
-}
-
 void PlusAssignExpression::genCode(Code &code){
 
-}
-
-Type MinusAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
 }
 
 void MinusAssignExpression::genCode(Code &code){
 
 }
 
-Type MultAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
-}
-
 void MultAssignExpression::genCode(Code &code){
 
-}
-
-Type DivAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
 }
 
 void DivAssignExpression::genCode(Code &code){
 
 }
 
-Type ModAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
-}
-
 void ModAssignExpression::genCode(Code &code){
 
-}
-
-Type PowAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
 }
 
 void PowAssignExpression::genCode(Code &code){
 
 }
 
-Type AndAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
-}
-
 void AndAssignExpression::genCode(Code &code){
 
-}
-
-Type OrAssignExpression::getType(){
-    AuxAssignExpre(this->leftExpressionList, this->rightExpressionList, this->line);
-    return BOOL;
 }
 
 void OrAssignExpression::genCode(Code &code){
@@ -1140,38 +1388,6 @@ void ColonAssignExpression::genCode(Code &code){
 
 }
 
-void EqualExpression::genCode(Code &code){
-
-}
-
-void NotEqualExpression::genCode(Code &code){
-
-}
-
-void GteExpression::genCode(Code &code){
-
-}
-
-void LteExpression::genCode(Code &code){
-
-}
-
-void GtExpression::genCode(Code &code){
-
-}
-
-void LtExpression::genCode(Code &code){
-
-}
-
-void LogicalAndExpression::genCode(Code &code){
-
-}
-
-void LogicalOrExpression::genCode(Code &code){
-
-}
-
 
 IMPLEMENT_BINARY_GET_TYPE(Add);
 IMPLEMENT_BINARY_GET_TYPE(Sub);
@@ -1184,8 +1400,8 @@ IMPLEMENT_BINARY_ARIT_GEN_CODE(Add, '+');
 IMPLEMENT_BINARY_ARIT_GEN_CODE(Sub, '-');
 IMPLEMENT_BINARY_ARIT_GEN_CODE(Mult, '*');
 IMPLEMENT_BINARY_ARIT_GEN_CODE(Div, '/');
-IMPLEMENT_BINARY_ARIT_GEN_CODE(Mod, '/');
-IMPLEMENT_BINARY_ARIT_GEN_CODE(Pow, '/');
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Mod, '%');
+IMPLEMENT_BINARY_ARIT_GEN_CODE(Pow, '^');
 
 IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(Equal);
 IMPLEMENT_BINARY_BOOLEAN_GET_TYPE(NotEqual);
