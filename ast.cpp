@@ -387,7 +387,7 @@ string PrintStatement::genCode(){
     list<Code>::iterator placesIt = codes.begin();
 
      while (placesIt != codes.end()){
-         
+
         releaseRegister((*placesIt).place);
         if((*placesIt).type == INT){
             ss <<"move $a0, "<< (*placesIt).place<<endl
@@ -580,11 +580,13 @@ string ForStatement::genCode(){
 
     if(this->initExpr != NULL){
         this->initExpr->genCode(initExprCode);
+        releaseRegister(initExprCode.place);
         ss<<initExprCode.code<<endl;
     }
     
     if(this->conditionalExpr != NULL){
         this->conditionalExpr->genCode(conditionalExprCode);
+        releaseRegister(conditionalExprCode.place);
         ss<<conditionalExprCode.code<<endl;
 
         if(conditionalExprCode.type == INT){
@@ -856,8 +858,44 @@ Type FunctionCallExpression::getType(){
 }
 
 void FunctionCallExpression::genCode(Code &code){
+    list<Expression *>::iterator it = this->args.begin();
+    list<Code> codes;
+    stringstream ss;
+    Code argCode;
+    while (it != this->args.end())
+    {
+        (*it)->genCode(argCode);
+        ss << argCode.code <<endl;
+        codes.push_back(argCode);
+        it++;
+    }
 
-    
+    int i = 0;
+    list<Code>::iterator placesIt = codes.begin();
+    while (placesIt != codes.end())
+    {
+        releaseRegister((*placesIt).place);
+        if((*placesIt).type == FLOAT32){
+            ss << "mfc1 $a"<<i<<", "<< (*placesIt).place<<endl;
+        }else{
+            ss << "move $a"<<i<<", "<< (*placesIt).place<<endl;
+        }
+        i++;
+        placesIt++;
+    }
+
+    ss<< "jal "<< this->id->value<<endl;
+    string reg;
+    if(methods[this->id->value]->returnType == FLOAT32){
+        reg = getFloatTemp();
+        ss << "mtc1 $v0, "<< reg<<endl;
+    }else{
+        reg = getIntTemp();
+        ss << "move "<< reg<<", $v0";
+    }
+    code.code = ss.str();
+    code.place = reg;
+    code.type = methods[this->id->value]->returnType;
 }
 
 Type FunctionInvocationExpression::getType(){
@@ -908,8 +946,44 @@ Type FunctionInvocationExpression::getType(){
 }
 
 void FunctionInvocationExpression::genCode(Code &code){
+    list<Expression *>::iterator it = this->args.begin();
+    list<Code> codes;
+    stringstream ss;
+    Code argCode;
+    while (it != this->args.end())
+    {
+        (*it)->genCode(argCode);
+        ss << argCode.code <<endl;
+        codes.push_back(argCode);
+        it++;
+    }
 
-    
+    int i = 0;
+    list<Code>::iterator placesIt = codes.begin();
+    while (placesIt != codes.end())
+    {
+        releaseRegister((*placesIt).place);
+        if((*placesIt).type == FLOAT32){
+            ss << "mfc1 $a"<<i<<", "<< (*placesIt).place<<endl;
+        }else{
+            ss << "move $a"<<i<<", "<< (*placesIt).place<<endl;
+        }
+        i++;
+        placesIt++;
+    }
+
+    ss<< "jal "<< this->id->value<<endl;
+    string reg;
+    if(methods[this->id->value]->returnType == FLOAT32){
+        reg = getFloatTemp();
+        ss << "mtc1 $v0, "<< reg<<endl;
+    }else{
+        reg = getIntTemp();
+        ss << "move "<< reg<<", $v0";
+    }
+    code.code = ss.str();
+    code.place = reg;
+    code.type = methods[this->id->value]->returnType;
 }
 
 #define IMPLEMENT_BINARY_GET_TYPE(name)\
@@ -1127,19 +1201,12 @@ void GteExpression::genCode(Code &code){
         ss << leftSideCode.code <<endl<< rightSideCode.code<<endl;
         releaseRegister(leftSideCode.place);
         releaseRegister(rightSideCode.place);
-        string isGteLabel = getNewLabel("isGteLabel");
-        string isNotGteLabel = getNewLabel("isGteLabel");
         string finalGteLabel = getNewLabel("finalGteLabel");
         string temp = getIntTemp();
         ss << "c.eq.s " << leftSideCode.place << ", "<<rightSideCode.place<<endl
-        <<"bc1t " <<isGteLabel<<endl
+        <<"bc1t " <<finalGteLabel<<endl
         <<"c.lt.s " <<rightSideCode.place<<", "<<leftSideCode.place<<endl
-        <<"bc1t " << isNotGteLabel <<endl
-        <<isGteLabel <<": "
-        <<"addi "<<temp<<", "<<"$zero, 1"<<endl
-        <<"j "<<finalGteLabel<<endl
-        <<isNotGteLabel<<": "<<endl
-        <<"move"<<temp<<", "<<"$zero"<<endl
+        <<"bc1t " << finalGteLabel <<endl
         <<finalGteLabel<<": "<<endl;
         code.code = temp;
     }
