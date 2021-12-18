@@ -75,8 +75,8 @@
 
 %token INT_TYPE FLOAT32_TYPE BOOL_TYPE
 
-%token KW_BREAK KW_FUNC KW_PACKAGE KW_CONTINUE KW_FOR KW_IMPORT KW_RETURN KW_VAR 
-%token KW_IF KW_ELSE
+%token KW_BREAK KW_FUNC KW_PACKAGE KW_CONTINUE KW_FOR KW_IMPORT KW_RETURN KW_VAR KW_PRINTLN
+%token KW_IF KW_ELSE 
 
 %token EOL
 
@@ -100,7 +100,7 @@
 %type<initializer_list_t> initializer
 %type<expression_list_t> array_values assignment_list
 %type<return_expression_list_t> return_expression_list
-%type<statement_t> if_statement for_statement return_statement jump_statement expression_statement
+%type<statement_t> if_statement for_statement return_statement jump_statement expression_statement print_statement
 %type<argument_list_t> argument_expression_list
 
 %%
@@ -247,6 +247,10 @@ statement: if_statement {$$ = $1; }
     | expression_statement {$$ = $1; }
     | function_definition {$$ = $1; }
     | var_declaration {$$ = $1; }
+    | print_statement{ $$ = $1; }
+    ;
+
+print_statement: KW_PRINTLN '(' argument_expression_list ')' { $$ = new PrintStatement(*$3, yylineno);}
     ;
 
 if_statement: KW_IF expression ';' logical_or_expression block_statement { $$ = new IfStatement($2, $4, $5, yylineno); }

@@ -36,7 +36,8 @@ enum StatementKind{
     GLOBAL_DECLARATION_STATEMENT,
     ELSE_STATEMENT,
     JUMP_STATEMENT,
-    VAR_DECLARATION_STATEMENT
+    VAR_DECLARATION_STATEMENT,
+    PRINT_STATEMENT
 };
 
 enum UnaryType{
@@ -174,6 +175,23 @@ class BlockStatement : public Statement {
         string genCode();
         StatementKind getKind(){
             return BLOCK_STATEMENT;
+        }
+};
+
+class PrintStatement : public Statement {
+    public:
+        PrintStatement(ArgumentsList args, int line){
+            this->args = args;
+            this->line = line;
+        }
+
+        ArgumentsList args;
+        int line;
+
+        int evaluateSemantic();
+        string genCode();
+        StatementKind getKind(){
+            return PRINT_STATEMENT;
         }
 };
 

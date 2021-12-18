@@ -31,6 +31,7 @@ DIGIT [0-9]
 "var" { return KW_VAR; }
 "true" { return KW_TRUE; }
 "false" { return KW_FALSE; }
+"fmt.Println" { return KW_PRINTLN; }
 
 
 "int" { return INT_TYPE; }

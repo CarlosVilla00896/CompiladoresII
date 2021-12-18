@@ -359,6 +359,23 @@ string BlockStatement::genCode(){
     return "";
 }
 
+int PrintStatement::evaluateSemantic(){
+    list<Expression *>::iterator argsIt = this->args.begin();
+
+    while(argsIt != this->args.end()){
+        (*argsIt)->getType();
+        cout<<"Me evaluo"<<endl;
+        argsIt++;
+    }
+
+    return 0;
+}
+
+string PrintStatement::genCode(){
+
+    return "";
+}
+
 int Parameter::evaluateSemantic(){
     if(!variableExists(this->id)){
         context->variables[this->id] = this->type;
