@@ -364,7 +364,6 @@ int PrintStatement::evaluateSemantic(){
 
     while(argsIt != this->args.end()){
         (*argsIt)->getType();
-        cout<<"Me evaluo"<<endl;
         argsIt++;
     }
 
@@ -372,8 +371,43 @@ int PrintStatement::evaluateSemantic(){
 }
 
 string PrintStatement::genCode(){
+    list<Expression *>::iterator it = this->args.begin();
+    list<Code> codes;
+    stringstream ss;
+    Code argCode;
+    while (it != this->args.end())
+    {
+        (*it)->genCode(argCode);
+        ss << argCode.code <<endl;
+        codes.push_back(argCode);
+        it++;
+    }
 
-    return "";
+    int i = 0;
+    list<Code>::iterator placesIt = codes.begin();
+
+     while (placesIt != codes.end()){
+         
+        releaseRegister((*placesIt).place);
+        if((*placesIt).type == INT){
+            ss <<"move $a0, "<< (*placesIt).place<<endl
+            << "li $v0, 1"<<endl
+            << "syscall"<<endl;
+        }else if((*placesIt).type == FLOAT32){
+            ss << "mov.s $f12, "<< (*placesIt).place<<endl
+            << "li $v0, 2"<<endl
+            << "syscall"<<endl;
+        }else if((*placesIt).type == STRING){
+            ss << "la $a0, "<< (*placesIt).place<<endl
+            << "li $v0, 4"<<endl
+            << "syscall"<<endl;
+        }
+        i++;
+        placesIt++;
+    }
+
+   
+    return ss.str();
 }
 
 int Parameter::evaluateSemantic(){
