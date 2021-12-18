@@ -572,6 +572,7 @@ int ForStatement::evaluateSemantic(){
 string ForStatement::genCode(){
     Code initExprCode;
     Code conditionalExprCode;
+    Code postExprCode;
     string forLabel = getNewLabel("for");
     string endForLabel = getNewLabel("endFor");
     stringstream ss;
@@ -593,13 +594,13 @@ string ForStatement::genCode(){
             ss<<"beqz "<<conditionalExprCode.place<<", "<<endForLabel<<endl;
         }else if(conditionalExprCode.type == FLOAT32){
             ss<<"bc1f "<<endForLabel<<endl;
-        }
-        
+        }   
 
     }
 
     if( this->postExpr != NULL){
-
+        this->postExpr->genCode(postExprCode);
+        ss<<postExprCode.code<<endl;
     }
 
     ss<<this->statement->genCode()<<endl
@@ -818,8 +819,56 @@ Type ArrayExpression::getType(){
 }
 
 void ArrayExpression::genCode(Code &code){
-
-    
+    Code arrayCode;
+    string name = this->id->value;
+    stringstream ss;
+    this->expression->genCode(arrayCode);
+    //a[1]
+    releaseRegister(arrayCode.place);
+    if (codeGenerationVars.find(name) == codeGenerationVars.end())
+    {
+        string temp = getIntTemp();
+        string labelAddress = getIntTemp();
+        ss << arrayCode.code<<endl
+        << "li $a0, 4"<<endl
+        << "mult $a0, "<< arrayCode.place<<endl
+        <<"mflo "<<temp<<endl
+        << "la "<< labelAddress<<", "<< name<<endl
+        << "add "<<temp<<", "<<labelAddress<<", "<<temp<<endl;
+        releaseRegister(labelAddress);
+        if(globalVariables[name] == INT){
+           ss <<"lw "<< temp<<", 0("<<temp<<")"<<endl;
+           code.place = temp;
+        }else{
+            string floatTemp = getFloatTemp();
+            ss <<"l.s "<< floatTemp<<", 0("<<temp<<")"<<endl;
+            code.place = floatTemp;
+        }
+    }else{
+        string temp = getIntTemp();
+        string address = getIntTemp();
+        ss << arrayCode.code<<endl
+        << "li $a0, 4"<<endl
+        << "mult $a0, "<< arrayCode.place<<endl
+        <<"mflo "<<temp<<endl;
+        if(!codeGenerationVars[name]->isParameter)
+            ss<< "la " + address +", " <<codeGenerationVars[name]->offset<<"($sp)\n";
+        else
+            ss << "lw "<<address<<", "<<codeGenerationVars[name]->offset<<"($sp)"<<endl;
+        ss<< "add "<<temp<<", "<<address<<", "<<temp<<endl;
+        releaseRegister(address);
+        if(codeGenerationVars[name]->type == INT){
+           ss <<"lw "<< temp<<", 0("<<temp<<")"<<endl;
+           code.place = temp;
+           code.type = INT;
+        }else{
+            string floatTemp = getFloatTemp();
+            ss <<"l.s "<< floatTemp<<", 0("<<temp<<")"<<endl;
+           code.place = floatTemp;
+           code.type = FLOAT32;
+        }
+    }
+    code.code = ss.str();
 }
 
 Type FunctionCallExpression::getType(){
