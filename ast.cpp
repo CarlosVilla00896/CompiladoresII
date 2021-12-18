@@ -325,8 +325,53 @@ int VarDeclaration::evaluateSemantic(){
 }
 
 string VarDeclaration::genCode(){
+    stringstream code;
+    list<Declarator *>::iterator it = this->declaratorsList.begin();
 
-    return "";
+    int declaratorItIndex = 0;
+    while( it != this->declaratorsList.end()){
+        Declarator * declarator = (*it);
+
+        list<Initializer *>::iterator initializerIt = initializerList.begin();
+        advance(initializerIt, declaratorItIndex);
+        Initializer * initializer  = (*initializerIt);
+
+        if(!declarator->isArray){
+             codeGenerationVars[declarator->id] = new VariableInfo(globalStackPointer, false, false, this->type);
+             globalStackPointer +=4;
+        }else{
+            codeGenerationVars[declarator->id] = new VariableInfo(globalStackPointer, true, false, this->type);
+            if(initializer->initializer == NULL){
+                if(declarator->arraySize != NULL){
+                    int size = ((IntExpression *)declarator->arraySize)->value;
+                    globalStackPointer += (size * 4);
+                }
+            }
+        }
+
+        if(initializer->initializer != NULL){
+            int offset = codeGenerationVars[declarator->id]->offset;
+            Code exprCode;
+            initializer->initializer->genCode(exprCode);
+            code << exprCode.code <<endl;
+            if(exprCode.type == INT){
+                code << "sw " << exprCode.place <<", "<< offset << "($sp)"<<endl;
+            }else if(exprCode.type == FLOAT32){
+                code << "s.s " << exprCode.place <<", "<< offset << "($sp)"<<endl;
+            }
+            releaseRegister(exprCode.place);
+            // if (declarator->isArray)
+            // {
+            //     globalStackPointer+=4;
+            //     offset += 4;
+            // }
+            
+        }
+
+        it++;
+    }
+
+    return code.str();
 }
 
 int GlobalDeclaration::evaluateSemantic(){
@@ -355,8 +400,20 @@ int BlockStatement::evaluateSemantic(){
 }
 
 string BlockStatement::genCode(){
+    stringstream ss;
 
-    return "";
+    list<Statement *>::iterator its = this->statements.begin();
+    while (its != this->statements.end())
+    {
+        Statement * stmt = *its;
+        if(stmt != NULL){
+            ss<<stmt->genCode()<<endl;
+        }
+
+        its++;
+    }
+
+    return ss.str();
 }
 
 int PrintStatement::evaluateSemantic(){
@@ -401,7 +458,12 @@ string PrintStatement::genCode(){
             ss << "la $a0, "<< (*placesIt).place<<endl
             << "li $v0, 4"<<endl
             << "syscall"<<endl;
+        }else if((*placesIt).type == BOOL){
+            ss << "move $a0, "<<(*placesIt).place<<endl
+            << "li $v0, 1"<<endl
+            << "syscall"<<endl;
         }
+
         i++;
         placesIt++;
     }
@@ -651,7 +713,7 @@ Type IntExpression::getType(){
 void IntExpression::genCode(Code &code){
     stringstream ss;
     string intTemp = getIntTemp();
-    ss << "li.s " << intTemp << ", "<< this->value <<endl;
+    ss << "li " << intTemp << ", "<< this->value <<endl;
     code.place = intTemp;
     code.type = INT;
     code.code = ss.str();
@@ -1349,9 +1411,8 @@ void LogicalAndExpression::genCode(Code &code){
     this->leftExpression->genCode(leftSideCode);
     this->rightExpression->genCode(rightSideCode);
     stringstream ss;
-    ss<< leftSideCode.code<<endl << rightSideCode.code <<endl;
-    releaseRegister(leftSideCode.place);
-    releaseRegister(rightSideCode.place);
+    ss<< leftSideCode.code<<endl
+    << rightSideCode.code <<endl;
     string temp = getIntTemp();
     string label = getNewLabel("label");
     string finalLabel = getNewLabel("finalLabel");
@@ -1361,7 +1422,10 @@ void LogicalAndExpression::genCode(Code &code){
     ss<< label<< ":"<<endl
     << "addi "<< temp<< ", $zero, 1"<<endl
     <<finalLabel<<":"<<endl;
+    releaseRegister(leftSideCode.place);
+    releaseRegister(rightSideCode.place);
     code.place = temp;
+    code.type = BOOL;
     code.code = ss.str();
 }
 
@@ -1372,8 +1436,6 @@ void LogicalOrExpression::genCode(Code &code){
     this->rightExpression->genCode(rightSideCode);
     stringstream ss;
     ss<< leftSideCode.code<<endl<< rightSideCode.code<<endl;
-    releaseRegister(leftSideCode.place);
-    releaseRegister(rightSideCode.place);
     string temp = getIntTemp();
     string label = getNewLabel("label");
     string finalLabel = getNewLabel("finalLabel");
@@ -1383,6 +1445,8 @@ void LogicalOrExpression::genCode(Code &code){
     ss<< label <<":"<<endl
     << "addi "<< temp<< ", $zero, 0"<<endl
     <<finalLabel<<":"<<endl;
+    releaseRegister(leftSideCode.place);
+    releaseRegister(rightSideCode.place);
     code.place = temp;
     code.code = ss.str();
 }
