@@ -683,8 +683,34 @@ int ReturnStatement::evaluateSemantic(){
 }
 
 string ReturnStatement::genCode(){
+    list<Expression *>::iterator expressionIt = this->expressionList.begin();
+    Code exprCode;
+    stringstream ss;
+    list<Code> codes;
 
-    return "";
+    while( expressionIt != this->expressionList.end()){
+        (*expressionIt)->genCode(exprCode);
+        ss << exprCode.code <<endl;
+        codes.push_back(exprCode);
+        
+        expressionIt++;
+    }
+    
+    int i = 0;
+    list<Code>::iterator placesIt = codes.begin();
+    while (placesIt != codes.end())
+    {
+        releaseRegister((*placesIt).place);
+        if(exprCode.type == INT)
+            ss<< "move $v"<<i<<", " << (*placesIt).place <<endl;
+        else
+            ss<< "mfc1 $v"<<i<<", "<<(*placesIt).place<<endl;
+        i++;
+        placesIt++;
+    }
+
+    
+    return ss.str();
 }
 
 int JumpStatement::evaluateSemantic(){
@@ -702,8 +728,10 @@ int ExpressionStatement::evaluateSemantic(){
 }
 
 string ExpressionStatement::genCode(){
-
-    return "";
+    Code exprCode;
+    this->expression->genCode(exprCode);
+    releaseRegister(exprCode.place);
+    return exprCode.code;
 }
 
 Type IntExpression::getType(){
@@ -862,12 +890,14 @@ void PostIncrementExpression::genCode(Code &code){
     if(exprCode.type == INT){
         ss<<"addi "<<exprCode.place<<", "<<exprCode.place<<", "<<"1"<<endl;
         code.place = exprCode.place;
+        code.type = INT;
     }else if(exprCode.type == FLOAT32){
         string floatTemp = getFloatTemp();
         ss<<"li.s "<<floatTemp<<", "<<"1.0"<<endl
         <<"add.s "<<exprCode.place<<", "<<exprCode.place<<", "<<floatTemp<<endl;
         releaseRegister(floatTemp);
         code.place = exprCode.place;
+        code.type = FLOAT32;
     }else if( exprCode.type == INT_ARRAY){
         string intTemp = getIntTemp();
         ss << "lw "<<intTemp<<", ("<<exprCode.place<<")"<<endl
@@ -875,13 +905,17 @@ void PostIncrementExpression::genCode(Code &code){
         <<"sw "<<intTemp<<", "<<to_string(codeGenerationVars[((IdExpression*)this->expression)->value]->offset)<<"($sp)"<<endl;
         releaseRegister(exprCode.place);
         code.place = intTemp;
+        code.type = INT_ARRAY;
     }else if( exprCode.type == FLOAT_ARRAY ){
         string floatTemp = getFloatTemp();
         ss << "l.s "<<floatTemp<<", ("<<exprCode.place<<")"<<endl
         <<"s.s "<<floatTemp<<", "<<to_string(codeGenerationVars[((IdExpression*)this->expression)->value]->offset)<<"($sp)"<<endl;
         releaseRegister(exprCode.place);
         code.place = floatTemp;
+        code.type = FLOAT_ARRAY;
     }
+
+    code.code = ss.str();
 }
 
 Type PostDecrementExpression::getType(){
@@ -904,12 +938,14 @@ void PostDecrementExpression::genCode(Code &code){
     if(exprCode.type == INT){
         ss<<"addi "<<exprCode.place<<", "<<exprCode.place<<", "<<"-1"<<endl;
         code.place = exprCode.place;
+        code.type = INT;
     }else if(exprCode.type == FLOAT32){
         string floatTemp = getFloatTemp();
         ss<<"li.s "<<floatTemp<<", "<<"1.0"<<endl
         <<"sub.s "<<exprCode.place<<", "<<exprCode.place<<", "<<floatTemp<<endl;
         releaseRegister(floatTemp);
         code.place = exprCode.place;
+        code.type = FLOAT32;
     }else if( exprCode.type == INT_ARRAY){
         string intTemp = getIntTemp();
         ss << "lw "<<intTemp<<", ("<<exprCode.place<<")"<<endl
@@ -917,6 +953,7 @@ void PostDecrementExpression::genCode(Code &code){
         <<"sw "<<intTemp<<", "<<to_string(codeGenerationVars[((IdExpression*)this->expression)->value]->offset)<<"($sp)"<<endl;
         releaseRegister(exprCode.place);
         code.place = intTemp;
+        code.type = INT_ARRAY;
     }else if( exprCode.type == FLOAT_ARRAY ){
         string floatTemp = getFloatTemp();
         string floatTemp2 = getFloatTemp();
@@ -927,7 +964,10 @@ void PostDecrementExpression::genCode(Code &code){
         releaseRegister(exprCode.place);
         releaseRegister(floatTemp2);
         code.place = floatTemp;
+        code.type = FLOAT_ARRAY;
     }
+
+    code.code = ss.str();
 }
 
 Type ArrayExpression::getType(){
