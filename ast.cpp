@@ -853,8 +853,35 @@ Type PostIncrementExpression::getType(){
 }
 
 void PostIncrementExpression::genCode(Code &code){
+    Code exprCode;
+    stringstream ss;
 
-    
+    this->expression->genCode(exprCode);
+    ss<<exprCode.code<<endl;
+
+    if(exprCode.type == INT){
+        ss<<"addi "<<exprCode.place<<", "<<exprCode.place<<", "<<"1"<<endl;
+        code.place = exprCode.place;
+    }else if(exprCode.type == FLOAT32){
+        string floatTemp = getFloatTemp();
+        ss<<"li.s "<<floatTemp<<", "<<"1.0"<<endl
+        <<"add.s "<<exprCode.place<<", "<<exprCode.place<<", "<<floatTemp<<endl;
+        releaseRegister(floatTemp);
+        code.place = exprCode.place;
+    }else if( exprCode.type == INT_ARRAY){
+        string intTemp = getIntTemp();
+        ss << "lw "<<intTemp<<", ("<<exprCode.place<<")"<<endl
+        <<"addi "<<intTemp<<", "<<intTemp<<", "<<"1"<<endl
+        <<"sw "<<intTemp<<", "<<to_string(codeGenerationVars[((IdExpression*)this->expression)->value]->offset)<<"($sp)"<<endl;
+        releaseRegister(exprCode.place);
+        code.place = intTemp;
+    }else if( exprCode.type == FLOAT_ARRAY ){
+        string floatTemp = getFloatTemp();
+        ss << "l.s "<<floatTemp<<", ("<<exprCode.place<<")"<<endl
+        <<"s.s "<<floatTemp<<", "<<to_string(codeGenerationVars[((IdExpression*)this->expression)->value]->offset)<<"($sp)"<<endl;
+        releaseRegister(exprCode.place);
+        code.place = floatTemp;
+    }
 }
 
 Type PostDecrementExpression::getType(){
@@ -868,8 +895,39 @@ Type PostDecrementExpression::getType(){
 }
 
 void PostDecrementExpression::genCode(Code &code){
+    Code exprCode;
+    stringstream ss;
 
-    
+    this->expression->genCode(exprCode);
+    ss<<exprCode.code<<endl;
+
+    if(exprCode.type == INT){
+        ss<<"addi "<<exprCode.place<<", "<<exprCode.place<<", "<<"-1"<<endl;
+        code.place = exprCode.place;
+    }else if(exprCode.type == FLOAT32){
+        string floatTemp = getFloatTemp();
+        ss<<"li.s "<<floatTemp<<", "<<"1.0"<<endl
+        <<"sub.s "<<exprCode.place<<", "<<exprCode.place<<", "<<floatTemp<<endl;
+        releaseRegister(floatTemp);
+        code.place = exprCode.place;
+    }else if( exprCode.type == INT_ARRAY){
+        string intTemp = getIntTemp();
+        ss << "lw "<<intTemp<<", ("<<exprCode.place<<")"<<endl
+        <<"addi "<<intTemp<<", "<<intTemp<<", "<<"-1"<<endl
+        <<"sw "<<intTemp<<", "<<to_string(codeGenerationVars[((IdExpression*)this->expression)->value]->offset)<<"($sp)"<<endl;
+        releaseRegister(exprCode.place);
+        code.place = intTemp;
+    }else if( exprCode.type == FLOAT_ARRAY ){
+        string floatTemp = getFloatTemp();
+        string floatTemp2 = getFloatTemp();
+        ss<<"li.s "<<floatTemp2<<", "<<"1.0"<<endl
+        << "l.s "<<floatTemp<<", ("<<exprCode.place<<")"<<endl
+        <<"sub.s "<<floatTemp<<", "<<floatTemp<<", "<<floatTemp2<<endl
+        <<"s.s "<<floatTemp<<", "<<to_string(codeGenerationVars[((IdExpression*)this->expression)->value]->offset)<<"($sp)"<<endl;
+        releaseRegister(exprCode.place);
+        releaseRegister(floatTemp2);
+        code.place = floatTemp;
+    }
 }
 
 Type ArrayExpression::getType(){
