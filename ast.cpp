@@ -1714,7 +1714,71 @@ Type ColonAssignExpression::getType(){
 }
 
 void ColonAssignExpression::genCode(Code &code){
+    stringstream ss;
+    list<Expression *>::iterator it = this->leftExpressionList.begin();
 
+    int declaratorItIndex = 0;
+    while( it != this->leftExpressionList.end()){
+        Expression * declarator = (*it);
+        IdExpression * declaratorId = (IdExpression*)declarator;
+        
+        list<Initializer *>::iterator initializerIt = this->rightExpressionList.begin();
+        advance(initializerIt, declaratorItIndex);
+        Initializer * initializer  = (*initializerIt);
+
+        if( !initializer->isArrayInitializer ){
+            codeGenerationVars[declaratorId->value] = new VariableInfo(globalStackPointer, false, false, declaratorId->getType());
+            globalStackPointer +=4;
+        }else{
+            codeGenerationVars[declaratorId->value] = new VariableInfo(globalStackPointer, true, false, declaratorId->getType());
+            // if(initializer->initializer == NULL){
+                if(initializer->initializer != NULL){
+                    int size = ((IntExpression *)initializer->initializer)->value;
+                    globalStackPointer += (size * 4);
+                }
+            // }
+        }
+
+        if(initializer->initializer != NULL){
+            list<Expression *>::iterator itExpr = initializer->arrayValues.begin();
+            int offset = codeGenerationVars[declaratorId->value]->offset;
+
+            if( !initializer->isArrayInitializer){
+                Code exprCode;
+                initializer->initializer->genCode(exprCode);
+                ss << exprCode.code <<endl;
+
+
+                if(exprCode.type == INT)
+                    ss << "sw " << exprCode.place <<", "<< offset << "($sp)"<<endl;
+                else if(exprCode.type == FLOAT32)
+                    ss << "s.s " << exprCode.place <<", "<< offset << "($sp)"<<endl;
+                releaseRegister(exprCode.place);
+                itExpr++;
+            }else{
+            
+                for (int i = 0; i < initializer->arrayValues.size(); i++)
+                {
+                    Code exprCode;
+                    (*itExpr)->genCode(exprCode);
+                    ss << exprCode.code <<endl;
+
+                    if(exprCode.type == INT)
+                        ss << "sw " << exprCode.place <<", "<< offset << "($sp)"<<endl;
+                    else if(exprCode.type == FLOAT32)
+                        ss << "s.s " << exprCode.place <<", "<< offset << "($sp)"<<endl;
+                    releaseRegister(exprCode.place);
+                    itExpr++;
+                    globalStackPointer+=4;
+                    offset += 4;
+                }
+            }
+        }
+
+        it++;
+    }
+
+    code.code = ss.str();
 }
 
 
