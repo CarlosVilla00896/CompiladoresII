@@ -5,23 +5,9 @@ import "math/rand"
 
 func main() {
  
-    /*
-    Operadores básicos
-    */
-    var a int =  5 * 100
-    var b int = 2 * 100
- 
-    fmt.Println("a = ", a)
-    fmt.Println("b = ", b)
-    fmt.Println("a+b = ", a+b)
-    fmt.Println("a-b = ", a-b)
-    fmt.Println("a*b = ", a*b)  
-    fmt.Println("a/b = ", a/b)
-    //fmt.Println("a%b = ", a%b)
-    fmt.Println("a>b = ", a>b)
-    fmt.Println("a<b = ", a<b)
-    fmt.Println("a>=b = ", a>=b)
-    fmt.Println("a<=b = ", a<=b)
-    fmt.Println("true&&false = ", true && false)
- 
+    var array[5] int
+    array[0] = 2
+    array[1] = 5
+
+    fmt.Println("El valor de array[0] es: ", array[0] )
 }
