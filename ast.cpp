@@ -1653,10 +1653,12 @@ void AssignExpression::genCode(Code &code){
         initializer->initializer->genCode(initializerCode);
         ss << initializerCode.code <<endl;
         //si cambio el casteo a ArrayExpression si me lo identifica, mismo problema puede pasar en short declaration
-        string declaratorName =  ((ArrayExpression *)declarator)->id->value;
+        
         cout<<"llego por aqui"<<endl;
-        if(false){
+        if( codeGenerationVars.find(((IdExpression*)declarator)->value) != codeGenerationVars.end() ){
             cout<<"No es array"<<endl;
+            string declaratorName =  ((IdExpression *)declarator)->value;
+            
             if(codeGenerationVars.find(declaratorName) == codeGenerationVars.end()){
                 if(initializerCode.type == INT || initializerCode.type == BOOL){
                     ss << "sw "<<initializerCode.place << ", "<<declaratorName <<endl;

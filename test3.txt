@@ -9,5 +9,9 @@ func main() {
     array[0] = 2
     array[1] = 5
 
-    fmt.Println("El valor de array[0] es: ", array[0] )
+    array[2]  = array[0] + array[1]
+
+    var loco float32 = 4.5 + array[2]
+
+    fmt.Println("El valor de array[0] es: ", loco )
 }
