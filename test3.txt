@@ -5,13 +5,24 @@ import "math/rand"
 
 func main() {
  
-    var array[5] int
-    array[0] = 2
-    array[1] = 5
-
-    array[2]  = array[0] + array[1]
-
-    var loco float32 = 4.5 + array[2]
-
-    fmt.Println("El valor de array[0] es: ", loco )
+    /*
+    Operadores básicos
+    */
+    a:= 3 * 100
+    b:= 2 * 100
+ 
+    fmt.Println("a = ", a)
+    fmt.Println("b = ", b)
+    fmt.Println("a+b = ", a+b)
+    fmt.Println("a-b = ", a-b)
+    fmt.Println("a*b = ", a*b)  
+    fmt.Println("a/b = ", a/b)
+    //fmt.Println("a%b = ", a%b)
+    fmt.Println("a>b = ", a>b)
+    fmt.Println("a<b = ", a<b)
+    fmt.Println("a>=b = ", a>=b)
+    fmt.Println("a<=b = ", a<=b)
+    fmt.Println("true&&true = ", true && true)
+ 
+}t.Println("\nArray after: ", arr)
 }

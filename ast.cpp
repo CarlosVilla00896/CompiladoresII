@@ -5,6 +5,7 @@
 #include "asm.h"
 
 int globalStackPointer = 0;
+int arraySize = 0;
 extern Asm assemblyFile;
 
 class VariableInfo{
@@ -353,7 +354,6 @@ string VarDeclaration::genCode(){
             
             codeGenerationVars[declarator->id] = new VariableInfo(globalStackPointer, true, false, this->type);
             // if(initializer->initializer == NULL){
-            cout<<"Variable declarada es array"<<endl;
                 if(declarator->arraySize != NULL){
                     
                     int size = ((IntExpression *)declarator->arraySize)->value;
@@ -438,6 +438,8 @@ int PrintStatement::evaluateSemantic(){
     return 0;
 }
 
+
+
 string PrintStatement::genCode(){
     list<Expression *>::iterator it = this->args.begin();
     list<Code> codes;
@@ -451,16 +453,42 @@ string PrintStatement::genCode(){
         it++;
     }
 
-    int i = 0;
+    int codesIndex = 0;
     list<Code>::iterator placesIt = codes.begin();
+    list<Expression *>::iterator argsIt = this->args.begin();
 
      while (placesIt != codes.end()){
 
         releaseRegister((*placesIt).place);
         if((*placesIt).type == INT){
-            ss <<"move $a0, "<< (*placesIt).place<<endl
-            << "li $v0, 1"<<endl
-            << "syscall"<<endl;
+            advance(argsIt, codesIndex);
+            if(codeGenerationVars.find(((IdExpression*)(*argsIt))->value) != codeGenerationVars.end()){
+                // string intTemp = getIntTemp();
+                IdExpression * id = (IdExpression*)(*argsIt);
+                if( codeGenerationVars[id->value]->isArray){
+                    int c = 0;
+                    int offset = 0;
+                    while( c < arraySize ){
+                        ss << "lw "<<"$t9"<<", "<<offset<<"("<<(*placesIt).place<<")"<<endl
+                        <<"move $a0, "<< "$t9"<<endl
+                        << "li $v0, 1"<<endl
+                        << "syscall"<<endl;
+
+                        c++;
+                        offset = offset + 4;
+                    }
+                }else{
+                    ss <<"move $a0, "<< (*placesIt).place<<endl
+                    << "li $v0, 1"<<endl
+                    << "syscall"<<endl;
+                }
+                // releaseRegister(intTemp);
+            }else{
+                ss <<"move $a0, "<< (*placesIt).place<<endl
+                << "li $v0, 1"<<endl
+                << "syscall"<<endl;
+            }
+            
         }else if((*placesIt).type == FLOAT32){
             ss << "mov.s $f12, "<< (*placesIt).place<<endl
             << "li $v0, 2"<<endl
@@ -475,7 +503,7 @@ string PrintStatement::genCode(){
             << "syscall"<<endl;
         }
 
-        i++;
+        codesIndex++;
         placesIt++;
     }
 
@@ -589,8 +617,21 @@ int IfStatement::evaluateSemantic(){
 }
 
 string IfStatement::genCode(){
-
-    return "";
+    string endIfLabel = getNewLabel("endif");
+    Code exprCode;
+    this->conditionalExpression->genCode(exprCode);
+    stringstream code;
+    code << exprCode.code << endl;
+    if(exprCode.type == INT){
+        code<< "beqz "<< exprCode.place << ", " << endIfLabel <<endl;
+    }else{
+        code << "bc1f "<< endIfLabel <<endl;
+    }
+    code<< this->trueStatement->genCode() << endl
+    << endIfLabel <<" :"<< endl;
+    releaseRegister(exprCode.place);
+    
+    return code.str();
 }
 
 int ElseStatement::evaluateSemantic(){
@@ -613,8 +654,24 @@ int ElseStatement::evaluateSemantic(){
 }
 
 string ElseStatement::genCode(){
-
-    return "";
+    string elseLabel = getNewLabel("else");
+    string endIfLabel = getNewLabel("endif");
+    Code exprCode;
+    this->conditionalExpression->genCode(exprCode);
+    stringstream code;
+    code << exprCode.code << endl;
+    if(exprCode.type == INT){
+        code<< "beqz "<< exprCode.place << ", " << elseLabel <<endl;
+    }else{
+        code << "bc1f "<< elseLabel <<endl;
+    }
+    code << this->trueStatement->genCode() << endl
+    << "j " <<endIfLabel << endl
+    << elseLabel <<": " <<endl
+    << this->falseStatement->genCode() <<endl
+    << endIfLabel <<" :"<< endl;
+    releaseRegister(exprCode.place);
+    return code.str();
 }
 
 int ForStatement::evaluateSemantic(){
@@ -650,19 +707,18 @@ string ForStatement::genCode(){
     string endForLabel = getNewLabel("endFor");
     stringstream ss;
 
-    ss<<forLabel<<": "<<endl;
-
     if(this->initExpr != NULL){
         this->initExpr->genCode(initExprCode);
-        releaseRegister(initExprCode.place);
         ss<<initExprCode.code<<endl;
+        releaseRegister(initExprCode.place);
     }
+
+    ss<<forLabel<<": "<<endl;
     
     if(this->conditionalExpr != NULL){
         this->conditionalExpr->genCode(conditionalExprCode);
-        releaseRegister(conditionalExprCode.place);
         ss<<conditionalExprCode.code<<endl;
-
+        releaseRegister(conditionalExprCode.place);
         if(conditionalExprCode.type == INT){
             ss<<"beqz "<<conditionalExprCode.place<<", "<<endForLabel<<endl;
         }else if(conditionalExprCode.type == FLOAT32){
@@ -671,15 +727,16 @@ string ForStatement::genCode(){
 
     }
 
+    ss<<this->statement->genCode()<<endl;
+
     if( this->postExpr != NULL){
         this->postExpr->genCode(postExprCode);
         ss<<postExprCode.code<<endl;
     }
 
-    ss<<this->statement->genCode()<<endl
-    <<"j "<< forLabel<<endl
+    ss<<"j "<< forLabel<<endl
     <<endForLabel<<": "<<endl;
-   
+
     return ss.str();
 }
 
@@ -851,7 +908,6 @@ void IdExpression::genCode(Code &code){
             code.place = intTemp;
             code.code = "lw "+ intTemp + ", " + to_string(codeGenerationVars[this->value]->offset) +"($sp)\n";
         }else if(codeGenerationVars[this->value]->isArray){
-            cout<<"Entro a id aca array"<<endl;
             string intTemp = getIntTemp();
             code.code = "la "+ intTemp + ", " + to_string(codeGenerationVars[this->value]->offset)+"($sp)\n";
             code.place = intTemp;
@@ -1652,11 +1708,8 @@ void AssignExpression::genCode(Code &code){
         
         initializer->initializer->genCode(initializerCode);
         ss << initializerCode.code <<endl;
-        //si cambio el casteo a ArrayExpression si me lo identifica, mismo problema puede pasar en short declaration
         
-        cout<<"llego por aqui"<<endl;
         if( codeGenerationVars.find(((IdExpression*)declarator)->value) != codeGenerationVars.end() ){
-            cout<<"No es array"<<endl;
             string declaratorName =  ((IdExpression *)declarator)->value;
             
             if(codeGenerationVars.find(declaratorName) == codeGenerationVars.end()){
@@ -1672,7 +1725,6 @@ void AssignExpression::genCode(Code &code){
                     ss<< "s.s "<< initializerCode.place <<", "<<codeGenerationVars[declaratorName]->offset<<"($sp)"<<endl;
             }
         }else{
-            cout<<"es array"<<endl;
             Code arrayExpr;
             string name = ((ArrayExpression *)declarator)->id->value;
             ((ArrayExpression *)declarator)->expression->genCode(arrayExpr);
@@ -1817,27 +1869,24 @@ void ColonAssignExpression::genCode(Code &code){
         list<Initializer *>::iterator initializerIt = this->rightExpressionList.begin();
         advance(initializerIt, declaratorItIndex);
         Initializer * initializer  = (*initializerIt);
-
+        
         if( !initializer->isArrayInitializer ){
-            cout<<"Variable name: "<<declaratorId->value<<endl;
-            codeGenerationVars[declaratorId->value] = new VariableInfo(globalStackPointer, false, false, declaratorId->getType());
-            cout<<"paso aca "<<endl;
+            codeGenerationVars[declaratorId->value] = new VariableInfo(globalStackPointer, false, false, initializer->initializer->getType());
             globalStackPointer +=4;
         }else{
-            codeGenerationVars[declaratorId->value] = new VariableInfo(globalStackPointer, true, false, declaratorId->getType());
+            codeGenerationVars[declaratorId->value] = new VariableInfo(globalStackPointer, true, false, initializer->type);
             // if(initializer->initializer == NULL){
                 if(initializer->initializer != NULL){
                     int size = ((IntExpression *)initializer->initializer)->value;
                     globalStackPointer += (size * 4);
+                    arraySize = size;
                 }
             // }
         }
 
-        if(initializer->initializer != NULL){
+        if(initializer != NULL){
             list<Expression *>::iterator itExpr = initializer->arrayValues.begin();
-            cout<<"Llego aca "<<endl;
             int offset = codeGenerationVars[declaratorId->value]->offset;
-            cout<<"Llego aqui "<<endl;
             if( !initializer->isArrayInitializer){
                 Code exprCode;
                 initializer->initializer->genCode(exprCode);
@@ -1850,7 +1899,6 @@ void ColonAssignExpression::genCode(Code &code){
                     ss << "s.s " << exprCode.place <<", "<< offset << "($sp)"<<endl;
                 releaseRegister(exprCode.place);
                 itExpr++;
-                cout<<"Entro aca tambien "<<endl;
             }else{
             
                 for (int i = 0; i < initializer->arrayValues.size(); i++)

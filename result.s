@@ -1,118 +1,226 @@
 .data
-string0: .asciiz"El valor de array[0] es: "
+string0: .asciiz"Array before: "
+string1: .asciiz"\nArray after: "
 
 .globl main
 .text
-main: 
-addiu $sp, $sp, -28
+BubbleSort: 
+addiu $sp, $sp, -12
 
 sw $ra, 0($sp)
 
-
-li $t0, 2
+sw $a0, 4($sp)
+sw $a1, 8($sp)
+li $t0, 3
 
 li $t1, 0
 
 li $a0, 4
 mult $a0, $t1
 mflo $t1
-la $t2, 4($sp)
+lw $t2, 4($sp)
 add $t1, $t1, $t2
-li $t3, 2
+li $t3, 3
 
 sw $t3, 0($t1)
 
-li $t0, 5
+li $t0, 8
 
 li $t1, 1
 
 li $a0, 4
 mult $a0, $t1
 mflo $t1
-la $t2, 4($sp)
+lw $t2, 4($sp)
 add $t1, $t1, $t2
-li $t4, 5
+li $t4, 8
 
 sw $t4, 0($t1)
 
-li $t0, 0
-
-li $a0, 4
-mult $a0, $t0
-mflo $t0
-la $t1, 4($sp)
-add $t0, $t1, $t0
-lw $t0, 0($t0)
-
-li $t1, 1
-
-li $a0, 4
-mult $a0, $t1
-mflo $t1
-la $t2, 4($sp)
-add $t1, $t2, $t1
-lw $t1, 0($t1)
-
-add $t0, $t0, $t1
+li $t0, 11
 
 li $t1, 2
 
 li $a0, 4
 mult $a0, $t1
 mflo $t1
-la $t2, 4($sp)
+lw $t2, 4($sp)
 add $t1, $t1, $t2
-li $t5, 0
-
-li $a0, 4
-mult $a0, $t5
-mflo $t5
-la $t6, 4($sp)
-add $t5, $t6, $t5
-lw $t5, 0($t5)
-
-li $t6, 1
-
-li $a0, 4
-mult $a0, $t6
-mflo $t6
-la $t7, 4($sp)
-add $t6, $t7, $t6
-lw $t6, 0($t6)
-
-add $t5, $t5, $t6
+li $t5, 11
 
 sw $t5, 0($t1)
 
-li.s $f0, 4.5
+li $t0, 14
 
-li $t0, 2
+li $t1, 3
 
 li $a0, 4
-mult $a0, $t0
-mflo $t0
-la $t1, 4($sp)
-add $t0, $t1, $t0
-lw $t0, 0($t0)
-mtc1 $t0, $f1
-cvt.s.w $f1, $f1
+mult $a0, $t1
+mflo $t1
+lw $t2, 4($sp)
+add $t1, $t1, $t2
+li $t6, 14
 
-add.s $f0, $f0, $f1
+sw $t6, 0($t1)
 
-s.s $f0, 24($sp)
+li $t0, 17
+
+li $t1, 4
+
+li $a0, 4
+mult $a0, $t1
+mflo $t1
+lw $t2, 4($sp)
+add $t1, $t1, $t2
+li $t7, 17
+
+sw $t7, 0($t1)
+
+li $t0, 18
+
+li $t1, 5
+
+li $a0, 4
+mult $a0, $t1
+mflo $t1
+lw $t2, 4($sp)
+add $t1, $t1, $t2
+li $t8, 18
+
+sw $t8, 0($t1)
+
+li $t0, 43
+
+li $t1, 6
+
+li $a0, 4
+mult $a0, $t1
+mflo $t1
+lw $t2, 4($sp)
+add $t1, $t1, $t2
+li $t9, 43
+
+sw $t9, 0($t1)
+
+lw $t0, 4($sp)
+
+move $v0, $t0
 
 
-l.s $f0, 24($sp)
+lw $ra, 0($sp)
+addiu $sp, $sp, 12
+jr $ra
+main: 
+addiu $sp, $sp, -64
+
+sw $ra, 0($sp)
+
+li $t0, 7
+
+sw $t0, 4($sp)
+
+li $t0, 11
+
+sw $t0, 8($sp)
+li $t0, 14
+
+sw $t0, 12($sp)
+li $t0, 3
+
+sw $t0, 16($sp)
+li $t0, 8
+
+sw $t0, 20($sp)
+li $t0, 18
+
+sw $t0, 24($sp)
+li $t0, 17
+
+sw $t0, 28($sp)
+li $t0, 43
+
+sw $t0, 32($sp)
+
+
+la $t0, 8($sp)
 
 la $a0, string0
 li $v0, 4
 syscall
-mov.s $f12, $f0
-li $v0, 2
+lw $t9, 0($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 4($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 8($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 12($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 16($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 20($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 24($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+
+la $t0, 8($sp)
+
+lw $t1, 4($sp)
+
+move $a0, $t0
+move $a1, $t1
+jal BubbleSort
+move $t0, $v0
+
+la $t0, 8($sp)
+
+la $a0, string1
+li $v0, 4
+syscall
+lw $t9, 0($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 4($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 8($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 12($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 16($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 20($t0)
+move $a0, $t9
+li $v0, 1
+syscall
+lw $t9, 24($t0)
+move $a0, $t9
+li $v0, 1
 syscall
 
 
 lw $ra, 0($sp)
-addiu $sp, $sp, 28
+addiu $sp, $sp, 64
 jr $ra
 

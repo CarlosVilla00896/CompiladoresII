@@ -8,8 +8,8 @@ func main() {
     /*
     Operadores básicos
     */
-    a:= rand.Float32() * 100
-    b:= rand.Float32() * 100
+    a:= 3 * 100
+    b:= 2 * 100
  
     fmt.Println("a = ", a)
     fmt.Println("b = ", b)
@@ -22,7 +22,7 @@ func main() {
     fmt.Println("a<b = ", a<b)
     fmt.Println("a>=b = ", a>=b)
     fmt.Println("a<=b = ", a<=b)
-    fmt.Println("true&&true = ", true && false)
+    fmt.Println("true&&true = ", true && true)
  
 }
 
@@ -37,27 +37,37 @@ func main() {
     for j := 7; j <= 9; j++ {
         fmt.Println(j)
     }
- 
+    
+    for n := 0; n <= 5; n++ {
+        if n%2 != 0 {
+            fmt.Println("Par: ", n)
+        }
+    }
+
     for {
         fmt.Println("loop")
         break
     }
  
-    for n := 0; n <= 5; n++ {
-        if n%2 == 0 {
-            continue
-        }
-        fmt.Println(n)
-    }
 }
 
+/*
+array[0] = 3
+   array[1] = 8
+   array[2] = 11
+   array[3] = 14
+   array[4] = 17
+   array[5] = 18
+   array[6] = 43
+*/
 
 func BubbleSort(array[] int, size int)[]int {
    for i:=0; i< size-1; i++ {
       for j:=0; j < size-i-1; j++ {
          if (array[j] > array[j+1]) {
-            array[j], array[j+1] = array[j+1], array[j]
-         }
+            array[j] = array[j+1]
+            array[j+1] = array[j]
+         }  
       }
    }
    return array
@@ -66,6 +76,8 @@ func BubbleSort(array[] int, size int)[]int {
 func main() {
  
    var size int = 7 
-   array:= []int{11, 14, 3, 8, 18, 17, 43};
-   fmt.Println(BubbleSort(array, size))
+   array:= [7]int{11, 14, 3, 8, 18, 17, 43}
+   fmt.Println("Array before: ", array)
+   BubbleSort(array, size)
+   fmt.Println("\nArray after: ", array)
 }
